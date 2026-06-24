@@ -65,6 +65,23 @@ Not arbitrary — a direct consequence of the wire format using a single byte to
 encode each label's length (a byte represents 0–255, with the high bits later
 reserved for compression pointers, capping usable length at 63 — see 1.3).
 
+```mermaid
+graph TD
+    Header["Header: 12 bytes - ID, Flags QR/AA/TC/RD/RA, RCODE, 4 counts"]
+    Question["Question Section: QNAME length-prefixed labels, QTYPE, QCLASS"]
+    Answer["Answer Section: RRs - NAME, TYPE, CLASS, TTL, RDLENGTH, RDATA"]
+    Authority["Authority Section: NS records for delegation"]
+    Additional["Additional Section: Glue records - A/AAAA for the NS hostnames"]
+
+    Header --> Question --> Answer --> Authority --> Additional
+
+    style Header fill:#ff6b6b
+    style Question fill:#ffa94d
+    style Answer fill:#74c0fc
+    style Authority fill:#69db7c
+    style Additional fill:#9775fa
+```
+
 Each dot represents a **zone boundary** — a point where administrative
 authority can be delegated to a different organization running different
 nameservers. `.com` is one zone (Verisign). `example.com` is a separate,
@@ -158,6 +175,25 @@ Authoritative → Recursive Resolver: AA=1, Answer: A 93.184.216.34, TTL=3600
 Recursive Resolver → Client:        93.184.216.34 (cached 3600s)
 ```
 
+```mermaid
+sequenceDiagram
+    participant C as Client (Stub Resolver)
+    participant R as Recursive Resolver (8.8.8.8)
+    participant Root as Root Server
+    participant TLD as .com TLD Server
+    participant Auth as Authoritative NS (example.com)
+
+    C->>R: Recursive Query: A? www.example.com (RD=1)
+    Note over R: Cache miss - must walk hierarchy iteratively
+    R->>Root: Iterative Query: A? www.example.com (RD=0)
+    Root-->>R: Referral: ask TLD servers for .com + glue A records
+    R->>TLD: Iterative Query: A? www.example.com
+    TLD-->>R: Referral: ask ns1.example.com + glue A records
+    R->>Auth: Iterative Query: A? www.example.com
+    Auth-->>R: AA=1, Answer: A 93.184.216.34, TTL=3600
+    R-->>C: Final Answer: 93.184.216.34 (cached for 3600s)
+```
+
 ### 1.5 Caching — The Mechanism That Makes the System Survivable
 
 Every record carries a **TTL**, in seconds, set by the zone owner. Every
@@ -177,6 +213,18 @@ Browser DNS Cache (seconds-minutes, browser-specific)
   -> OS Stub Resolver Cache (systemd-resolved / nscd / Windows DNS Client)
     -> Recursive Resolver Cache (ISP / 8.8.8.8 / 1.1.1.1 - the big shared cache)
       -> Authoritative Nameserver (source of truth, sets the TTL)
+```
+
+```mermaid
+graph TD
+    A["Browser DNS Cache: seconds to minutes, browser-specific"] --> B["OS Stub Resolver Cache: systemd-resolved / nscd / Windows DNS Client"]
+    B --> C["Recursive Resolver Cache: ISP / 8.8.8.8 / 1.1.1.1 - the big shared cache"]
+    C --> D["Authoritative Nameserver: source of truth, sets the TTL"]
+
+    style A fill:#ffd43b
+    style B fill:#ffa94d
+    style C fill:#69db7c
+    style D fill:#4dabf7
 ```
 
 Each layer is checked top to bottom before falling through, and each layer
@@ -210,6 +258,30 @@ caching/hosts-file quirks."
 `dns.lookup()` is dispatched to the `uv_threadpool_t` — the same fixed-size pool
 (default size 4, configurable via `UV_THREADPOOL_SIZE`, read once at startup)
 that also handles `fs.*`, `crypto.pbkdf2`, `crypto.scrypt`, and `zlib`.
+
+```mermaid
+graph LR
+    subgraph MainThread["Main Thread - Single Call Stack"]
+    A["JS Call: dns.lookup"] -->|enqueue libuv work request| B["uv_queue_work"]
+    end
+
+    subgraph ThreadPool["libuv Thread Pool - default 4 threads, shared resource"]
+    C["Thread 1: fs.readFile"]
+    D["Thread 2: dns.lookup via getaddrinfo"]
+    E["Thread 3: crypto.pbkdf2"]
+    F["Thread 4: idle or contended"]
+    end
+
+    B -.dispatch.-> C
+    B -.dispatch.-> D
+
+    D -->|getaddrinfo blocks on OS resolver plus etc-hosts plus nscd| G["Kernel Resolver Stack"]
+    G -->|completion| H["libuv Poll Phase completion queue"]
+    H -->|callback queued| I["Event Loop: Poll Phase Callback"]
+    I --> J["JS Callback Executes on Main Thread"]
+
+    K["dns.resolve4 alternate path"] -.->|"c-ares raw UDP socket, handled directly in Poll phase, no threadpool"| H
+```
 
 **Concrete failure mode:** with 4 threadpool slots, concurrent `fs.readFile()`
 and `dns.lookup()` calls **contend for the same 4 threads.** A burst of
@@ -306,6 +378,26 @@ GLB --backend selection: geo-proximity + health checks--> Serverless NEG
 
 Health check fails on a backend -> GLB removes it from rotation instantly,
 no TTL wait involved.
+```
+
+```mermaid
+graph TB
+    U["User"] -->|DNS query: api.example.com| CDNS["Cloud DNS: Anycast, 100% SLA"]
+    CDNS -->|A record: Anycast VIP e.g. 34.110.x.x| U
+    U -->|HTTPS to anycast VIP routed via GCP global network| GFE["Google Front End: nearest PoP via BGP anycast"]
+
+    GFE --> GLB["Global External HTTPS LB: single anycast IP, no DNS-based failover needed"]
+
+    GLB -->|backend selection via geo-proximity plus health checks| NEG1["Serverless NEG: Cloud Run us-central1"]
+    GLB -->|backend selection via geo-proximity plus health checks| NEG2["Serverless NEG: Cloud Run europe-west1"]
+    GLB -->|backend selection via geo-proximity plus health checks| NEG3["Serverless NEG: Cloud Run asia-southeast1"]
+
+    NEG1 -.health check fails.-> GLB
+    GLB -.removes from rotation instantly, no TTL wait.-> NEG1
+
+    style CDNS fill:#4285f4
+    style GLB fill:#34a853
+    style NEG1 fill:#fbbc05
 ```
 
 **Key architectural insight:** GCP's Global External HTTPS Load Balancer uses

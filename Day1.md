@@ -75,11 +75,11 @@ graph TD
 
     Header --> Question --> Answer --> Authority --> Additional
 
-    style Header fill:#ff6b6b
-    style Question fill:#ffa94d
-    style Answer fill:#74c0fc
-    style Authority fill:#69db7c
-    style Additional fill:#9775fa
+    style Header fill:#ff6b6b,color:#000000,stroke:#000000
+    style Question fill:#ffa94d,color:#000000,stroke:#000000
+    style Answer fill:#74c0fc,color:#000000,stroke:#000000
+    style Authority fill:#69db7c,color:#000000,stroke:#000000
+    style Additional fill:#9775fa,color:#000000,stroke:#000000
 ```
 
 Each dot represents a **zone boundary** — a point where administrative
@@ -221,10 +221,10 @@ graph TD
     B --> C["Recursive Resolver Cache: ISP / 8.8.8.8 / 1.1.1.1 - the big shared cache"]
     C --> D["Authoritative Nameserver: source of truth, sets the TTL"]
 
-    style A fill:#ffd43b
-    style B fill:#ffa94d
-    style C fill:#69db7c
-    style D fill:#4dabf7
+    style A fill:#ffd43b,color:#000000,stroke:#000000
+    style B fill:#ffa94d,color:#000000,stroke:#000000
+    style C fill:#69db7c,color:#000000,stroke:#000000
+    style D fill:#4dabf7,color:#000000,stroke:#000000
 ```
 
 Each layer is checked top to bottom before falling through, and each layer
@@ -395,9 +395,9 @@ graph TB
     NEG1 -.health check fails.-> GLB
     GLB -.removes from rotation instantly, no TTL wait.-> NEG1
 
-    style CDNS fill:#4285f4
-    style GLB fill:#34a853
-    style NEG1 fill:#fbbc05
+    style CDNS fill:#4285f4,color:#000000,stroke:#000000
+    style GLB fill:#34a853,color:#000000,stroke:#000000
+    style NEG1 fill:#fbbc05,color:#000000,stroke:#000000
 ```
 
 **Key architectural insight:** GCP's Global External HTTPS Load Balancer uses

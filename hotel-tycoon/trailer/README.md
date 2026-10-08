@@ -15,4 +15,4 @@ python3 trailer/music.py 39 music.wav
 ffmpeg -framerate 30 -i frames/f%05d.jpg -i music.wav -c:v libx264 -pix_fmt yuv420p -crf 18 -c:a aac -b:a 192k -shortest hotel-tycoon-trailer.mp4
 ```
 
-`?rec` lowers the shadow-map size to speed up rendering. Set `ONLY=0,30,60` to render (and save) just a few frames for a quick check.
+`?rec` lowers the shadow-map size to speed up rendering. Set `ONLY=0,30,60` to save just a few frames for a quick check, or `START=840` to re-render from a scene cut (earlier frames only advance the simulation).

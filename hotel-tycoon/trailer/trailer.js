@@ -24,6 +24,7 @@
     background: rgba(255,255,255,.92); padding: 18px 28px 22px; border-radius: 22px; box-shadow: 0 20px 60px rgba(20,30,60,.18); }
   #tr .cap.top { left: 50%; bottom: auto; top: 200px; margin-left: -330px; align-items: flex-start; }
   #tr .cap.top .line { font-size: 52px; }
+  #tr .cap.top .sub { background: rgba(255,255,255,.92); padding: 10px 18px; border-radius: 12px; font-size: 22px; box-shadow: 0 10px 30px rgba(20,30,60,.12); }
   #tr .sub { font-size: 26px; color: #4a5468; font-weight: 500; padding-left: 6px; text-shadow: 0 1px 0 rgba(255,255,255,.8); }
   #tr .night .sub { color: #e7ebf7; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
   #tr .url { margin-top: 18px; display: flex; align-items: center; gap: 14px; background: #1d2433; color: #fff; font-size: 34px; font-weight: 600; padding: 18px 30px; border-radius: 18px; box-shadow: 0 20px 50px rgba(29,36,51,.35); }
@@ -173,6 +174,9 @@
       at(f, Math.round(S.night * FPS), 'day', () => {
         g().minute = 11 * 60
         g().speed = 1
+        g().rating = 4.6
+        g().today.lost = 0
+        g().today.missed = 0
         H.ui.getState().setSelected('3-1')
       })
       at(f, Math.round((S.night + 2.4) * FPS), 'staff', () => H.ui.setState({ rail: 'staff' }))

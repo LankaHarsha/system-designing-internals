@@ -32,7 +32,12 @@ const URL = process.env.URL || 'http://localhost:4173/'
   const last = ONLY ? Math.max(...ONLY) : total - 1
   console.log('frames', total)
   const t0 = Date.now()
-  for (let f = 0; f <= last; f++) {
+  // START lets us re-render from a scene cut: earlier frames only advance the simulation.
+  const START = +(process.env.START || 0)
+  for (let f = 0; f < START; f++) {
+    await page.evaluate(({ fr, fps }) => { window.__frame(fr); window.hotel.step(1 / fps) }, { fr: f, fps: FPS })
+  }
+  for (let f = START; f <= last; f++) {
     const a = Date.now()
     await page.evaluate((fr) => window.__frame(fr), f)
     const b = Date.now()

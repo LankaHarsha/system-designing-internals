@@ -6,6 +6,9 @@ import { game, SIDEWALK_Z, TAXI_LANE_Z, TAXI_ARRIVE, absTime } from '../game/eng
 import { DEPTH, SLOT_W, ELEV_W } from '../game/constants'
 import { B, Cyl, mat, sphereGeo, glowMat, glowMats, env, updateGlowMats, T } from './parts'
 
+// Recording mode (?rec) trades a little shadow sharpness for much faster software rendering.
+const REC = typeof location !== 'undefined' && new URLSearchParams(location.search).has('rec')
+
 // ---------------------------------------------------------------- road layout (z grows toward the camera)
 export const ROAD = {
   near: SIDEWALK_Z + 1.1,
@@ -89,7 +92,7 @@ export function Lighting({ center }) {
         ref={sun}
         castShadow
         target={target}
-        shadow-mapSize={[4096, 4096]}
+        shadow-mapSize={REC ? [2048, 2048] : [4096, 4096]}
         shadow-bias={-0.0003}
         shadow-normalBias={0.04}
         shadow-radius={6}

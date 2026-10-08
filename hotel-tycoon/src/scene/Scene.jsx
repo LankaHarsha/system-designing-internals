@@ -13,6 +13,11 @@ import Agents from './Agents'
 
 function GameLoop() {
   const acc = useRef(0)
+  const gl = useThree((s) => s.gl)
+  useEffect(() => {
+    // handy for tooling (e.g. the trailer recorder) to inspect the renderer
+    window.__renderer = gl
+  }, [gl])
   useFrame((_, dt) => {
     step(dt)
     acc.current += dt
@@ -45,7 +50,7 @@ function Floaters() {
 
 // ---------------------------------------------------------------- camera
 // Imperative camera API used by the on-screen map controls.
-export const camApi = { zoom: () => {}, rotate: () => {}, home: () => {}, focus: () => {} }
+export const camApi = { zoom: () => {}, rotate: () => {}, home: () => {}, focus: () => {}, set: () => {} }
 
 const HOME_DIR = new THREE.Vector3(0.62, 0.66, 1).normalize()
 
@@ -69,6 +74,8 @@ function CameraRig() {
   }
 
   const flyTo = (pos, target) => {
+    // scripted cameras (e.g. the trailer recorder) can lock out automatic framing
+    if (window.__camLocked) return
     anim.current = { pos, target }
   }
 
@@ -88,6 +95,15 @@ function CameraRig() {
     if (!c) return
     const off = camera.position.clone().sub(c.target).applyAxisAngle(THREE.Object3D.DEFAULT_UP, a)
     flyTo(c.target.clone().add(off), c.target.clone())
+  }
+  // Jump straight to a pose (used by scripted camera moves, e.g. the trailer recorder).
+  camApi.set = (pos, target) => {
+    const c = controls.current
+    if (!c) return
+    anim.current = null
+    camera.position.set(...pos)
+    c.target.set(...target)
+    c.update()
   }
   camApi.focus = (x, y, z, dist = 26) => {
     const c = controls.current

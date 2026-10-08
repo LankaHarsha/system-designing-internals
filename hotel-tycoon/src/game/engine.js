@@ -7,6 +7,7 @@ import {
 const SAVE_KEY = 'hotel-tycoon-save-v1'
 const CHECKIN_TIME = 10 // game minutes per guest at the desk
 const CLEAN_TIME = 35
+export const TAXI_ARRIVE = 10 // game minutes for a taxi to reach the curb
 
 const rand = (a, b) => a + Math.random() * (b - a)
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
@@ -47,6 +48,7 @@ function createGame() {
     structureVersion: 0,
     lastSummary: null,
     spawnAcc: 0,
+    taxis: [],
   }
   placeRoom(g, 1, 0, 'standard')
   placeRoom(g, 1, 1, 'standard')
@@ -66,8 +68,12 @@ syncStaffAgents()
 export const lobbyWidth = () => game.width * SLOT_W
 export const deskX = () => lobbyWidth() / 2 + 0.6
 export const entranceX = () => lobbyWidth() - 1.7
-export const SIDEWALK_Z = DEPTH / 2 + 2.4
-export const ISLAND_PAD = 12
+export const SIDEWALK_Z = DEPTH / 2 + 3.4
+export const CURB_Z = SIDEWALK_Z + 1.25 // where taxis drop guests off
+export const TAXI_LANE_Z = SIDEWALK_Z + 2.0
+export const WALK_RANGE = 26 // guests on foot appear/disappear this far from the hotel
+export const absTime = () => game.day * 1440 + game.minute
+export const curbX = () => entranceX() + 1.6
 
 export function serviceSpot(i) {
   return { x: deskX() + (i - 1) * 1.25, y: 0, z: -0.2 }
@@ -174,7 +180,11 @@ function spawnGuest() {
   const [, pDeluxe, pSuite] = demandMix(game.rating)
   const roll = Math.random()
   const tier = roll < pSuite ? 2 : roll < pSuite + pDeluxe ? 1 : 0
-  const start = { x: lobbyWidth() + 10.5 + rand(0, 0.8), y: 0, z: SIDEWALK_Z + rand(-0.3, 0.3) }
+  // half the guests arrive by taxi, the rest stroll in along the sidewalk
+  const byTaxi = Math.random() < 0.5 && game.taxis.length < 4
+  const start = byTaxi
+    ? { x: curbX(), y: 0, z: CURB_Z - 0.5 }
+    : { x: lobbyWidth() + WALK_RANGE + rand(0, 1), y: 0, z: SIDEWALK_Z + rand(-0.4, 0.4) }
   const a = {
     id: game.nextId++,
     kind: 'guest',
@@ -184,17 +194,20 @@ function spawnGuest() {
     scale: rand(0.9, 1.08),
     pos: start,
     heading: -Math.PI / 2,
-    path: [
+    path: byTaxi ? [] : [
       { x: entranceX(), y: 0, z: SIDEWALK_Z },
       { x: entranceX(), y: 0, z: DEPTH / 2 - 0.3 },
     ],
-    state: 'arriving',
+    state: byTaxi ? 'taxi' : 'arriving',
+    hidden: byTaxi,
+    taxiT: 0,
     wait: 0,
     patience: rand(90, 160),
     sat: 3.6,
     mood: 'happy',
     speedMul: rand(0.9, 1.15),
   }
+  if (byTaxi) game.taxis.push({ id: game.nextId++, guestId: a.id, start: absTime(), x: curbX() })
   game.agents.push(a)
 }
 
@@ -206,7 +219,7 @@ function leave(a, reason) {
   const lobbyPoint = { x: entranceX(), y: 0, z: DEPTH / 2 - 0.3 }
   routeTo(a, lobbyPoint)
   exitPath.push({ x: entranceX(), y: 0, z: SIDEWALK_Z + 0.4 })
-  exitPath.push({ x: -ISLAND_PAD + 0.6, y: 0, z: SIDEWALK_Z + 0.4 })
+  exitPath.push({ x: -WALK_RANGE, y: 0, z: SIDEWALK_Z + 0.4 })
   a.path.push(...exitPath)
   if (reason) a.mood = 'angry'
 }
@@ -307,6 +320,18 @@ function finishStay(a) {
 
 function stepGuest(a, dt) {
   switch (a.state) {
+    case 'taxi':
+      a.taxiT += dt
+      if (a.taxiT >= TAXI_ARRIVE) {
+        a.hidden = false
+        a.state = 'arriving'
+        a.path = [
+          { x: curbX(), y: 0, z: SIDEWALK_Z },
+          { x: entranceX(), y: 0, z: SIDEWALK_Z - 0.6 },
+          { x: entranceX(), y: 0, z: DEPTH / 2 - 0.3 },
+        ]
+      }
+      break
     case 'arriving':
       if (!a.moving) {
         if (game.queue.length >= QUEUE_MAX) {
@@ -561,6 +586,8 @@ function tick(dt) {
     if (guests < 90) spawnGuest()
   }
 
+  if (game.taxis.length && absTime() - game.taxis[0].start > 40) game.taxis.shift()
+
   stepDesks()
   for (const a of game.agents) {
     moveAgent(a, dt)
@@ -753,7 +780,7 @@ function load() {
   }
 }
 function createGameShell() {
-  return { floaters: [], toasts: [], spawnAcc: 0, lastSummary: null }
+  return { floaters: [], toasts: [], spawnAcc: 0, lastSummary: null, taxis: [] }
 }
 export function resetGame() {
   try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
@@ -762,12 +789,26 @@ export function resetGame() {
   game.structureVersion = Date.now() % 100000
 }
 
+export function roomName(room) {
+  return `${room.floor}${String(room.slot + 1).padStart(2, '0')}`
+}
+
 export function snapshot() {
   const rooms = Object.values(game.rooms)
   const guestRooms = rooms.filter((r) => ROOM_TYPES[r.type].kind === 'room')
   const occupied = guestRooms.filter((r) => r.status === 'occupied').length
   const dirty = guestRooms.filter((r) => r.status === 'dirty' || r.status === 'cleaning').length
+  const journey = { arriving: 0, queue: 0, checkin: 0, staying: 0, leaving: 0 }
+  for (const a of game.agents) {
+    if (a.kind !== 'guest') continue
+    if (a.state === 'taxi' || a.state === 'arriving') journey.arriving++
+    else if (a.state === 'queue') journey.queue++
+    else if (a.state === 'toDesk') journey.checkin++
+    else if (a.state === 'leaving') journey.leaving++
+    else journey.staying++
+  }
   return {
+    journey,
     money: Math.floor(game.money),
     day: game.day,
     minute: game.minute,
@@ -781,7 +822,7 @@ export function snapshot() {
     occupied,
     dirty,
     queue: game.queue.length,
-    guests: game.agents.filter((a) => a.kind === 'guest' && a.state !== 'leaving').length,
+    guests: game.agents.filter((a) => a.kind === 'guest' && a.state !== 'leaving' && a.state !== 'taxi').length,
     today: { ...game.today },
     totals: { ...game.totals },
     goalsDone: { ...game.goalsDone },

@@ -22,15 +22,14 @@ export default function App() {
   return (
     <div className="app">
       <Canvas
-        key={quality === 'low' ? 'low' : 'fx'}
-        orthographic
+        key={quality}
         shadows={quality === 'low' ? 'basic' : 'soft'}
         flat={quality !== 'low'}
         dpr={quality === 'high' ? [1, 2] : [1, 1.25]}
-        camera={{ position: [40, 30, 46], zoom: 22, near: -200, far: 400 }}
+        camera={{ fov: 30, position: [60, 50, 80], near: 0.5, far: 700 }}
         gl={{ antialias: quality === 'low', powerPreference: 'high-performance' }}
         onCreated={({ gl }) => {
-          if (quality === 'low') gl.toneMapping = THREE.ACESFilmicToneMapping
+          if (quality === 'low') gl.toneMapping = THREE.NeutralToneMapping
         }}
         onPointerMissed={() => useGame.getState().setSelected(null)}
       >

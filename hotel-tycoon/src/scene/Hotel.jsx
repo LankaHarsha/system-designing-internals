@@ -5,12 +5,14 @@ import { Html } from '@react-three/drei'
 import { game, buildRoom, demolish, deskX, entranceX, receptionistSpot } from '../game/engine'
 import { SLOT_W, FLOOR_H, DEPTH, ELEV_W, SLAB, CORRIDOR_Z, ROOM_TYPES, slotX } from '../game/constants'
 import { useGame, syncUI } from '../game/store'
-import { B, Cyl, Ball, mat, glowMat, env, sphereGeo } from './parts'
+import { B, Cyl, Ball, mat, glowMat, env, sphereGeo, T, nightGlass } from './parts'
+import { roomName } from '../game/engine'
 import { FURNITURE, Plant, Sofa, Table } from './Furniture'
 
-const FACADE = '#f4b9a0'
-const TRIM = '#fff7ec'
-const ACCENT = '#5aa79a'
+const FACADE = '#f7f9fd'
+const TRIM = '#ffffff'
+const ACCENT = T.accent
+const BAND = '#e4e9f3'
 const INNER_H = FLOOR_H - SLAB
 
 export default function Hotel() {
@@ -36,9 +38,6 @@ export default function Hotel() {
         <Slot key={`${s.key}-${game.rooms[s.key]?.type || 'empty'}`} {...s} room={game.rooms[s.key]} />
       ))}
       <Roof floors={floors} width={width} />
-      <Html position={[lw + 0.4, 1.1, DEPTH / 2 + 0.2]} center zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
-        <div className="world-tag">Lobby</div>
-      </Html>
     </group>
   )
 }
@@ -56,7 +55,7 @@ function Shell({ floors, width }) {
     const y = f * FLOOR_H
     items.push(<B key={`slab${f}`} args={[lw + 0.3, SLAB, DEPTH + 0.3]} color={TRIM} position={[lw / 2, y - SLAB / 2, 0]} />)
     // a pastel band on the front edge of each slab
-    if (f > 0) items.push(<B key={`band${f}`} args={[lw + 0.32, 0.12, 0.06]} color={f === floors + 1 ? ACCENT : FACADE} position={[lw / 2, y - SLAB - 0.02, DEPTH / 2 + 0.16]} shadow={false} />)
+    if (f > 0) items.push(<B key={`band${f}`} args={[lw + 0.32, 0.12, 0.06]} color={f === floors + 1 ? ACCENT : BAND} position={[lw / 2, y - SLAB - 0.02, DEPTH / 2 + 0.16]} shadow={false} />)
     // elevator landings
     items.push(<B key={`land${f}`} args={[ELEV_W, SLAB, 1.2]} color={TRIM} position={[-ELEV_W / 2, y - SLAB / 2, DEPTH / 2 - 0.45]} />)
   }
@@ -75,7 +74,7 @@ function Shell({ floors, width }) {
       items.push(
         <group key={`win${f}${z}`} position={[lw + 0.31, f * FLOOR_H + 1.45, z]}>
           <B args={[0.06, 1.25, 0.95]} color={TRIM} shadow={false} />
-          <B args={[0.07, 1.05, 0.75]} m={glowMat('#ffd9a0', 0.05, 1.6)} shadow={false} />
+          <B args={[0.07, 1.05, 0.75]} m={nightGlass()} shadow={false} />
           <B args={[0.12, 0.08, 1.05]} color={TRIM} position={[0.03, -0.66, 0]} shadow={false} />
         </group>
       )
@@ -110,8 +109,8 @@ function Lobby({ width, receptionists }) {
       {Array.from({ length: width * 2 }).map((_, i) => (
         <B key={i} args={[1.6, 0.032, 1.6]} color="#efe2d0" position={[1 + i * 2, 0.017, -0.6 + (i % 2) * 1.6]} shadow={false} />
       ))}
-      <B args={[lw, INNER_H, 0.1]} m={mat('#f7d9bd', { emissive: '#f7d9bd', emissiveIntensity: 0.05 })} position={[lw / 2, INNER_H / 2, -DEPTH / 2 + 0.05]} shadow={false} />
-      <B args={[lw, 0.9, 0.06]} color="#d9a877" position={[lw / 2, 0.45, -DEPTH / 2 + 0.12]} shadow={false} />
+      <B args={[lw, INNER_H, 0.1]} m={mat('#f3ece6', { emissive: '#f3ece6', emissiveIntensity: 0.05 })} position={[lw / 2, INNER_H / 2, -DEPTH / 2 + 0.05]} shadow={false} />
+      <B args={[lw, 0.9, 0.06]} color="#e8d7c6" position={[lw / 2, 0.45, -DEPTH / 2 + 0.12]} shadow={false} />
       <B args={[lw, 0.06, 0.1]} color={TRIM} position={[lw / 2, 0.92, -DEPTH / 2 + 0.14]} shadow={false} />
 
       {/* reception desk */}
@@ -153,12 +152,11 @@ function Lobby({ width, receptionists }) {
 
       {/* entrance: awning, mat, topiaries */}
       <group position={[ex, 0, DEPTH / 2]}>
-        <B args={[1.8, 0.03, 1.2]} color="#c75f55" position={[0, 0.03, 0.5]} shadow={false} />
-        {Array.from({ length: 6 }).map((_, i) => (
-          <B key={i} args={[0.36, 0.1, 1.3]} color={i % 2 ? '#ffffff' : '#e9776a'} position={[-0.9 + 0.18 + i * 0.36, 2.55, 0.55]} rotation={[0.25, 0, 0]} />
-        ))}
-        <Cyl args={[0.03, 0.03, 2.5, 6]} color="#4c4a5e" position={[-0.95, 1.25, 1.15]} />
-        <Cyl args={[0.03, 0.03, 2.5, 6]} color="#4c4a5e" position={[0.95, 1.25, 1.15]} />
+        <B args={[1.8, 0.03, 1.2]} color="#e8edf6" position={[0, 0.03, 0.5]} shadow={false} />
+        <B args={[2.4, 0.16, 1.5]} r={0.07} color={ACCENT} position={[0, 2.55, 0.55]} />
+        <B args={[2.3, 0.04, 1.4]} m={glowMat('#fff3dc', 0.3, 2.2)} position={[0, 2.46, 0.55]} shadow={false} />
+        <Cyl args={[0.04, 0.04, 2.5, 10]} color="#c9d2e6" position={[-0.95, 1.25, 1.15]} />
+        <Cyl args={[0.04, 0.04, 2.5, 10]} color="#c9d2e6" position={[0.95, 1.25, 1.15]} />
         <Topiary position={[-1.3, 0, 1.2]} />
         <Topiary position={[1.3, 0, 1.2]} />
       </group>
@@ -194,17 +192,17 @@ function Elevator({ floors }) {
   const x0 = -ELEV_W
   return (
     <group>
-      <B args={[ELEV_W, topY, 0.1]} m={mat('#bfe3e0', { emissive: '#bfe3e0', emissiveIntensity: 0.05 })} position={[x0 + ELEV_W / 2, topY / 2 - SLAB, -DEPTH / 2 + 0.05]} shadow={false} />
+      <B args={[ELEV_W, topY, 0.1]} m={mat('#e9eef8', { emissive: '#e9eef8', emissiveIntensity: 0.04 })} position={[x0 + ELEV_W / 2, topY / 2 - SLAB, -DEPTH / 2 + 0.05]} shadow={false} />
       {[x0 + 0.25, -0.25].map((x) => (
-        <B key={x} args={[0.1, topY, 0.1]} color="#8f8aa6" position={[x, topY / 2 - SLAB, -0.6]} />
+        <B key={x} args={[0.1, topY, 0.1]} color={ACCENT} position={[x, topY / 2 - SLAB, -0.6]} />
       ))}
       <B args={[0.08, topY, 0.08]} color="#d9d3e8" position={[x0 + ELEV_W / 2, topY / 2 - SLAB, -1.2]} shadow={false} />
       {Array.from({ length: floors + 1 }).map((_, f) => (
         <group key={f} position={[x0 + ELEV_W / 2, f * FLOOR_H, 0.95]}>
           {/* door frame */}
-          <B args={[1.5, 0.12, 0.12]} color="#8f8aa6" position={[0, 2.2, 0]} />
-          <B args={[0.12, 2.2, 0.12]} color="#8f8aa6" position={[-0.75, 1.1, 0]} />
-          <B args={[0.12, 2.2, 0.12]} color="#8f8aa6" position={[0.75, 1.1, 0]} />
+          <B args={[1.5, 0.12, 0.12]} color="#c9d2e6" position={[0, 2.2, 0]} />
+          <B args={[0.12, 2.2, 0.12]} color="#c9d2e6" position={[-0.75, 1.1, 0]} />
+          <B args={[0.12, 2.2, 0.12]} color="#c9d2e6" position={[0.75, 1.1, 0]} />
           <Ball r={0.06} m={glowMat('#8ef0b5', 0.8, 2.5)} position={[0.95, 1.3, 0.05]} shadow={false} />
           <B args={[0.5, 0.2, 0.02]} m={glowMat('#ffdf8a', 0.3, 2)} position={[0, 2.42, 0.02]} shadow={false} />
         </group>
@@ -223,7 +221,7 @@ function useSignTexture() {
     const draw = () => {
       ctx.clearRect(0, 0, c.width, c.height)
       ctx.fillStyle = '#ffffff'
-      ctx.font = '700 170px Fredoka, "Trebuchet MS", sans-serif'
+      ctx.font = '800 170px Inter, system-ui, sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillText('HOTEL', c.width / 2, c.height / 2 + 10)
@@ -268,7 +266,7 @@ function Roof({ floors, width }) {
       {Array.from({ length: Math.max(1, width - 2) }).map((_, i) => (
         <group key={i} position={[1.5 + i * 2.2, 0, -1.1]}>
           <B args={[1.1, 0.6, 0.8]} r={0.06} color="#e6e2ee" position={[0, 0.3, 0]} />
-          <Cyl args={[0.28, 0.28, 0.04, 14]} color="#8f8aa6" position={[0, 0.62, 0]} />
+          <Cyl args={[0.28, 0.28, 0.04, 14]} color="#c9d2e6" position={[0, 0.62, 0]} />
         </group>
       ))}
       {/* string lights */}
@@ -279,10 +277,10 @@ function Roof({ floors, width }) {
       <group position={[lw / 2, 1.6, 0.9]}>
         <B args={[0.1, 1.2, 0.1]} color="#4c4a5e" position={[-1.8, -0.6, -0.2]} />
         <B args={[0.1, 1.2, 0.1]} color="#4c4a5e" position={[1.8, -0.6, -0.2]} />
-        <B args={[4.4, 1.25, 0.12]} r={0.1} color="#3a3a58" position={[0, 0.15, -0.1]} />
+        <B args={[4.4, 1.25, 0.12]} r={0.1} color={ACCENT} position={[0, 0.15, -0.1]} />
         <mesh position={[0, 0.15, -0.03]}>
           <planeGeometry args={[4.2, 1.05]} />
-          <meshStandardMaterial ref={signMat} map={sign} emissiveMap={sign} emissive="#ffb3c7" color="#ffd6e2" transparent toneMapped={false} />
+          <meshStandardMaterial ref={signMat} map={sign} emissiveMap={sign} emissive="#ffffff" color="#ffffff" transparent toneMapped={false} />
         </mesh>
       </group>
     </group>
@@ -341,11 +339,25 @@ function Slot({ floor, slot, room }) {
       {Furniture ? <Furniture def={def} /> : <EmptyDecor showPlus={!!canBuild} color={canBuild ? buildDef.accent : '#bdb3a4'} />}
       {room && <RoomStatus roomKey={key} wallMat={wallMat} def={def} />}
 
-      {highlight && (
+      {highlight && !selected && (
         <mesh position={[0, INNER_H / 2, 0]} raycast={() => null}>
           <boxGeometry args={[SLOT_W - 0.05, INNER_H, DEPTH]} />
-          <meshBasicMaterial color={hlColor} transparent opacity={0.16} depthWrite={false} toneMapped={false} />
+          <meshBasicMaterial color={hlColor} transparent opacity={0.12} depthWrite={false} toneMapped={false} />
         </mesh>
+      )}
+      {selected && room && (
+        <>
+          <Brackets />
+          <MapPin position={[0, INNER_H - 0.9, DEPTH / 2 + 0.9]} color={ACCENT} />
+          <Html position={[-SLOT_W / 2 + 0.2, INNER_H - 0.1, DEPTH / 2 + 0.3]} zIndexRange={[20, 10]} style={{ pointerEvents: 'none' }}>
+            <div className="world-chip"><b>{roomName(room)}</b> {def.name}</div>
+          </Html>
+        </>
+      )}
+      {hovered && !tool && room && !selected && (
+        <Html position={[0, INNER_H + 0.2, 1]} center zIndexRange={[20, 10]} style={{ pointerEvents: 'none' }}>
+          <div className="world-chip"><b>{roomName(room)}</b> {def.name}</div>
+        </Html>
       )}
       {hovered && canBuild && (
         <Html position={[0, INNER_H + 0.2, 1]} center zIndexRange={[20, 10]} style={{ pointerEvents: 'none' }}>
@@ -370,6 +382,43 @@ function Slot({ floor, slot, room }) {
         <boxGeometry args={[SLOT_W - 0.05, INNER_H, DEPTH]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
+    </group>
+  )
+}
+
+// A floating map pin like the ones used on logistics dashboards.
+export function MapPin({ position, color = ACCENT, scale = 1 }) {
+  const ref = useRef()
+  useFrame(() => {
+    if (ref.current) ref.current.position.y = position[1] + Math.sin(performance.now() / 380) * 0.08
+  })
+  const m = mat(color, { roughness: 0.35 })
+  return (
+    <group ref={ref} position={position} scale={scale}>
+      <mesh geometry={sphereGeo(0.42, 32)} material={m} position={[0, 0.95, 0]} castShadow />
+      <mesh position={[0, 0.42, 0]} rotation={[Math.PI, 0, 0]} material={m} castShadow>
+        <coneGeometry args={[0.37, 0.85, 32]} />
+      </mesh>
+      <mesh geometry={sphereGeo(0.17, 24)} material={mat('#ffffff')} position={[0, 0.97, 0.3]} />
+    </group>
+  )
+}
+
+function Brackets() {
+  const w = SLOT_W / 2 - 0.15
+  const top = INNER_H - 0.1
+  const z = DEPTH / 2 + 0.3
+  const L = 0.7
+  const m = glowMat(ACCENT, 0.6, 1.4)
+  const corners = [[-w, 0.15, 1, 1], [w, 0.15, -1, 1], [-w, top, 1, -1], [w, top, -1, -1]]
+  return (
+    <group>
+      {corners.map(([x, y, sx, sy], i) => (
+        <group key={i} position={[x, y, z]}>
+          <B args={[L, 0.07, 0.07]} m={m} position={[(sx * L) / 2, 0, 0]} shadow={false} />
+          <B args={[0.07, L, 0.07]} m={m} position={[0, (sy * L) / 2, 0]} shadow={false} />
+        </group>
+      ))}
     </group>
   )
 }
@@ -422,18 +471,23 @@ function RoomStatus({ roomKey, wallMat, def }) {
       sparkle.current.position.y = 1.6 + Math.sin(t * 4) * 0.1
     }
     if (badge.current) {
-      const show = def.kind === 'room' && (room.status === 'vacant' || room.status === 'dirty')
-      badge.current.visible = show
-      badge.current.position.y = INNER_H - 0.25 + Math.sin(t * 2.5 + roomKey.length) * 0.05
-      if (badgeMat.current) badgeMat.current.color.set(room.status === 'vacant' ? '#5fe08f' : '#ffa94d')
+      badge.current.visible = def.kind === 'room' && room.status === 'dirty'
+      badge.current.position.y = INNER_H - 1.75 + Math.sin(t * 2.6 + roomKey.length) * 0.06
+      badge.current.scale.setScalar(0.55)
     }
   })
   return (
     <group>
-      <mesh ref={badge} position={[0, INNER_H - 0.25, CORRIDOR_Z - 0.5]} raycast={() => null}>
-        <sphereGeometry args={[0.12, 12, 10]} />
-        <meshBasicMaterial ref={badgeMat} color="#5fe08f" toneMapped={false} />
-      </mesh>
+      <group ref={badge} position={[0, INNER_H - 1.2, CORRIDOR_Z - 0.3]}>
+        <mesh geometry={sphereGeo(0.42, 24)} position={[0, 0.95, 0]} raycast={() => null}>
+          <meshStandardMaterial ref={badgeMat} color="#ffb020" roughness={0.35} />
+        </mesh>
+        <mesh position={[0, 0.42, 0]} rotation={[Math.PI, 0, 0]} raycast={() => null}>
+          <coneGeometry args={[0.37, 0.85, 24]} />
+          <meshStandardMaterial color="#ffb020" roughness={0.35} />
+        </mesh>
+        <mesh geometry={sphereGeo(0.17, 16)} material={mat('#ffffff')} position={[0, 0.97, 0.3]} raycast={() => null} />
+      </group>
       <group ref={bag} position={[0.6, 0, 0.9]} visible={false}>
         <Ball r={0.22} color="#6b6377" position={[0, 0.2, 0]} scale={[1, 0.9, 1]} />
         <Ball r={0.16} color="#7d7489" position={[0.3, 0.14, 0.15]} />

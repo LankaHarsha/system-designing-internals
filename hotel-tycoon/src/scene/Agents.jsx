@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { game, ISLAND_PAD, lobbyWidth } from '../game/engine'
+import { game, WALK_RANGE, lobbyWidth } from '../game/engine'
 
 const MAX = 140
 const dummy = new THREE.Object3D()
@@ -28,11 +28,11 @@ export default function Agents() {
 
   const geos = useMemo(
     () => ({
-      body: new THREE.CapsuleGeometry(0.17, 0.32, 4, 10),
-      head: new THREE.SphereGeometry(0.16, 14, 12),
-      hair: new THREE.SphereGeometry(0.17, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      body: new THREE.CapsuleGeometry(0.17, 0.32, 8, 20),
+      head: new THREE.SphereGeometry(0.16, 24, 18),
+      hair: new THREE.SphereGeometry(0.17, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.55),
       mood: new THREE.OctahedronGeometry(0.1),
-      disc: new THREE.CylinderGeometry(0.42, 0.42, 0.06, 20),
+      disc: new THREE.CylinderGeometry(0.42, 0.42, 0.06, 32),
       apron: new THREE.BoxGeometry(0.26, 0.3, 0.04),
     }),
     []
@@ -50,13 +50,16 @@ export default function Agents() {
     const t = performance.now() / 1000
     const agents = game.agents
     const n = Math.min(agents.length, MAX)
-    const minX = -ISLAND_PAD
-    const maxX = lobbyWidth() + ISLAND_PAD
+    let k = 0
+    const minX = -WALK_RANGE
+    const maxX = lobbyWidth() + WALK_RANGE + 1
     let moodCount = 0
     let discCount = 0
     let apronCount = 0
-    for (let i = 0; i < n; i++) {
-      const a = agents[i]
+    for (let j = 0; j < n; j++) {
+      const a = agents[j]
+      if (a.hidden) continue
+      const i = k++
       const { x, y, z } = a.pos
       // shrink in/out at the island edges
       const edge = Math.min(x - minX, maxX - x)
@@ -98,7 +101,7 @@ export default function Agents() {
       }
     }
     for (const m of [body, head, hair]) {
-      m.current.count = n
+      m.current.count = k
       m.current.instanceMatrix.needsUpdate = true
       if (m.current.instanceColor) m.current.instanceColor.needsUpdate = true
     }

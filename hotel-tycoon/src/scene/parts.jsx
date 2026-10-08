@@ -1,6 +1,25 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 
+// Scene palette: a bright, high-key "clay" look with one warm accent.
+export const T = {
+  ground: '#dfe5f1',
+  lot: '#f4f6fb',
+  sidewalk: '#f7f8fc',
+  curb: '#dfe5f0',
+  road: '#c9d4ea',
+  lane: '#ffffff',
+  white: '#fbfcfe',
+  wall: '#f3f5fa',
+  glass: '#b9cdf3',
+  accent: '#ff6a45',
+  accentDark: '#e2522f',
+  ink: '#2b3245',
+  leaf: '#93d6b0',
+  leaf2: '#7cc9a0',
+  trunk: '#c8a78c',
+}
+
 // Shared geometry / material caches keep draw setup cheap as the hotel grows.
 const geoCache = new Map()
 const matCache = new Map()
@@ -9,13 +28,13 @@ export function boxGeo(w, h, d, r = 0) {
   const key = `${w}|${h}|${d}|${r}`
   let g = geoCache.get(key)
   if (!g) {
-    g = r > 0 ? new RoundedBoxGeometry(w, h, d, 3, r) : new THREE.BoxGeometry(w, h, d)
+    g = r > 0 ? new RoundedBoxGeometry(w, h, d, 4, r) : new THREE.BoxGeometry(w, h, d)
     geoCache.set(key, g)
   }
   return g
 }
 
-export function cylGeo(rt, rb, h, seg = 16) {
+export function cylGeo(rt, rb, h, seg = 24) {
   const key = `cyl|${rt}|${rb}|${h}|${seg}`
   let g = geoCache.get(key)
   if (!g) {
@@ -25,7 +44,7 @@ export function cylGeo(rt, rb, h, seg = 16) {
   return g
 }
 
-export function sphereGeo(r, seg = 16) {
+export function sphereGeo(r, seg = 24) {
   const key = `sph|${r}|${seg}`
   let g = geoCache.get(key)
   if (!g) {
@@ -49,7 +68,7 @@ export function mat(color, opts = {}) {
   const key = `${color}|${JSON.stringify(opts)}`
   let m = matCache.get(key)
   if (!m) {
-    m = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, ...opts })
+    m = new THREE.MeshStandardMaterial({ color, roughness: 0.62, metalness: 0, envMapIntensity: 0.9, ...opts })
     matCache.set(key, m)
   }
   return m
@@ -84,7 +103,7 @@ export function Cyl({ args, color = '#ffffff', position, rotation, shadow = true
   )
 }
 
-export function Ball({ r, color = '#ffffff', position, scale, shadow = true, m, seg = 16, ...rest }) {
+export function Ball({ r, color = '#ffffff', position, scale, shadow = true, m, seg = 24, ...rest }) {
   return (
     <mesh
       geometry={sphereGeo(r, seg)}
@@ -119,4 +138,17 @@ export function updateGlowMats() {
     const { dayIntensity, nightIntensity } = m.userData
     m.emissiveIntensity = dayIntensity + (nightIntensity - dayIntensity) * env.night
   }
+}
+
+// Glass that reads as glass by day and glows warm at night.
+export function nightGlass(color = '#cfdcf7', glow = '#ffdca8', nightIntensity = 1.3) {
+  const key = `ng|${color}|${glow}|${nightIntensity}`
+  let m = matCache.get(key)
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ color, emissive: glow, emissiveIntensity: 0, roughness: 0.15, metalness: 0.05 })
+    m.userData = { dayIntensity: 0, nightIntensity }
+    matCache.set(key, m)
+    glowMats.push(m)
+  }
+  return m
 }

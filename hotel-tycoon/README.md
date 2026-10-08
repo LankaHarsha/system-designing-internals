@@ -1,6 +1,6 @@
 # Hotel Tycoon
 
-A cozy isometric hotel management strategy game built with **React**, **React Three Fiber** and **drei**.
+A hotel management strategy game built with **React**, **React Three Fiber** and **drei**. It has a bright, clay-render style: a cutaway hotel set in a small city block with streets, traffic, a parking lot and a pool garden, plus a dashboard UI.
 
 Run a tiny hotel, keep the lobby queue moving, keep rooms clean, and grow it into a tower.
 
@@ -15,7 +15,7 @@ npm run build    # static build in dist/
 
 ## How to play
 
-- **Guests** walk in from the street, queue at reception and get the free room that best matches what they want. They pay on check-in.
+- **Guests** arrive by taxi or on foot, queue at reception and get the free room that best matches what they want. They pay on check-in.
 - **Rooms**: Cozy Room, Deluxe Room and Royal Suite. A better star rating brings guests who want fancier rooms (see *Staff & Prices → Who is arriving*). Selected rooms can be upgraded.
 - **Housekeeping**: after check-out a room is dirty and can't be sold until a housekeeper cleans it.
 - **Reception**: each receptionist opens another check-in desk. Guests who wait too long walk out and hurt your rating.
@@ -25,7 +25,7 @@ npm run build    # static build in dist/
 - **Economy**: wages and upkeep are charged at midnight, and an end-of-day report shows how you did.
 - **Goals** pay cash rewards. Progress autosaves to `localStorage`.
 
-Controls: drag to rotate, right-drag or two fingers to pan, scroll to zoom. `Space` pauses, `1`/`2`/`3` set the speed and `Esc` cancels build mode.
+Controls: drag to orbit, right-drag or two fingers to pan, scroll to zoom, or use the map controls on the right. Search a room number in the nav bar, or click a row in the rooms board, to fly the camera to that room. `Space` pauses, `1`/`2`/`3` set the speed and `Esc` cancels build mode.
 
 ## Code map
 
@@ -37,8 +37,9 @@ Controls: drag to rotate, right-drag or two fingers to pan, scroll to zoom. `Spa
 | `src/scene/Hotel.jsx` | The cutaway building, lobby, elevator, roof sign and the clickable room slots |
 | `src/scene/Furniture.jsx` | Low-poly furniture for each room type |
 | `src/scene/Agents.jsx` | All guests and staff, drawn with instanced meshes |
-| `src/scene/Environment.jsx` | Floating diorama island, day/night sky and lighting, trees, cars, clouds |
-| `src/scene/Scene.jsx` | Camera rig, game loop, floating money text, post-processing (AO, bloom, tilt-shift) |
-| `src/ui/HUD.jsx` | Top bar, build bar, panels, goals, toasts, day summary |
+| `src/scene/Environment.jsx` | City block (roads, parking, pool garden, neighbouring buildings), traffic, taxis, day/night lighting |
+| `src/scene/Scene.jsx` | Camera rig and map-control API, game loop, floating money text, post-processing (AO, bloom) |
+| `src/ui/HUD.jsx` | Nav bar, KPI cards, tool rail and flyouts, room detail panel, map controls, guest-journey stepper, rooms/staff board, modals |
+| `src/ui/Icon.jsx` | Inline SVG icon set |
 
 The `HQ`/`MQ`/`LQ` button in the corner switches graphics quality. Low quality turns off post-processing for slower devices.

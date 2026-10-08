@@ -12,7 +12,7 @@ export const MAX_WIDTH = 7
 export const MIN_WIDTH = 3
 
 export const MINUTES_PER_SECOND = 10 // game minutes per real second at 1x
-export const WALK_SPEED = 0.17 // units per game minute
+export const WALK_SPEED = 0.21 // units per game minute
 export const ELEV_SPEED = 0.55
 
 export const QUEUE_MAX = 8
@@ -111,12 +111,12 @@ export const ROOM_TYPES = {
 }
 
 export const STAFF_TYPES = {
-  housekeeper: { id: 'housekeeper', name: 'Housekeeper', hire: 300, wage: 80, max: 12, icon: '🧹', color: '#7cc6b4' },
+  housekeeper: { id: 'housekeeper', name: 'Housekeeper', hire: 300, wage: 80, max: 12, icon: '🧹', color: '#5b8def' },
   receptionist: { id: 'receptionist', name: 'Receptionist', hire: 400, wage: 100, max: DESK_CAPACITY, icon: '🛎️', color: '#e98a6b' },
 }
 
 export const GUEST_COLORS = [
-  '#f28b82', '#fbbc04', '#a7c7e7', '#b39ddb', '#80cbc4', '#ffab91', '#90caf9', '#c5e1a5', '#f48fb1', '#ffe082',
+  '#ff8a65', '#4f7cff', '#ffc94d', '#6fd39a', '#a78bfa', '#f472b6', '#60a5fa', '#8b95ad', '#2dd4bf', '#ffffff',
 ]
 
 export const floorCost = (floors) => Math.round(1500 * Math.pow(1.55, floors - 1) / 50) * 50

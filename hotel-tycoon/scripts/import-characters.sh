@@ -25,8 +25,18 @@ cp "$TMP/kenney/License.txt" "$OUT/kenney-mini/LICENSE.txt"
 
 # Quaternius Ultimate Modular Men + Women
 python3 -m venv "$TMP/py" && "$TMP/py/bin/pip" install -q gdown
-"$TMP/py/bin/gdown" -q --folder "$QUAT_MEN" -O "$TMP/men"
-"$TMP/py/bin/gdown" -q --folder "$QUAT_WOMEN" -O "$TMP/women"
+# List each Drive folder and download only the glTFs and licence we need: the folders also
+# hold hundreds of MB of .blend/.fbx files, and Drive refuses some of those downloads.
+"$TMP/py/bin/python" -I - "$TMP" "$QUAT_MEN" "$QUAT_WOMEN" $QUAT <<'PY'
+import os, sys, gdown
+tmp, men, women, *pairs = sys.argv[1:]
+for sex, url in (("men", men), ("women", women)):
+    want = {f"Individual Characters/glTF/{p.split(':')[0].split('/')[1]}.gltf" for p in pairs if p.startswith(sex + "/")} | {"License.txt"}
+    files = {f.path: f.id for f in gdown.download_folder(url, skip_download=True, quiet=True, output=f"{tmp}/{sex}/")}
+    for path in sorted(want):
+        os.makedirs(os.path.dirname(f"{tmp}/{sex}/{path}"), exist_ok=True)
+        gdown.download(id=files[path], output=f"{tmp}/{sex}/{path}", quiet=True, retries=3) or sys.exit(f"download failed: {sex}/{path}")
+PY
 npm install -s --prefix "$TMP/gt" @gltf-transform/core@4 @gltf-transform/functions@4 @gltf-transform/extensions@4
 cp scripts/slim-character.mjs "$TMP/gt/"
 mkdir -p "$OUT/quaternius-modular"

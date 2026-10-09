@@ -61,6 +61,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-09 | Deployed commit aa30c73 (character packs) to production on Vercel (READY in about 15 s); all 10 smoke tests pass against hotel-tycoon.vercel.app |
 | 2026-10-09 | Installed Kenney Mini Characters (6 GLBs) and Quaternius Modular Men + Women (4 outfits, slimmed to GLB, pistol removed) in the lab, via `scripts/import-characters.sh`. Asset test now also checks external textures and that each model has the manifest's idle and walk clips |
 | 2026-10-09 | Character lab at `?lab`: lobby from KayKit Furniture + Restaurant Bits (CC0, imported from GitHub), today's people for comparison, manifest-driven slots for candidate packs. Asset-existence unit tests and a lab smoke test. `ASSETS.md` added |
 | 2026-10-09 | Deployed commit 62c0719 to production on Vercel (build READY in about 20 s). Added `vercel.json` and a post-deploy smoke workflow |

@@ -18,8 +18,8 @@ The current build is a polished sandbox with staff from minute one. It is closer
 | Room tiers and amenities | Done | Cozy, Deluxe, Suite; Restaurant, Bar, Spa |
 | Build, demolish, upgrade, add floors, widen | Done | |
 | Pricing, end-of-day report, goals | Done | |
-| Save | Partial | `localStorage` only, one slot, no schema version |
-| Deterministic simulation | Partial | Seeded RNG added; engine is still a module singleton, not `packages/sim` |
+| Save | Partial | `localStorage`, one slot; versioned format (v2) that loads v1 saves |
+| Deterministic simulation | Done | Pure object-oriented `src/sim` (`Game`, `Building`, `Guest`, …); golden-master tests pin its behaviour |
 | Owner avatar, energy, manual tasks | Not started | Core of M1 |
 | First-hire moment, staff traits | Not started | Game starts with 1 housekeeper + 1 receptionist |
 | Breakdowns, complaints | Not started | |
@@ -35,12 +35,12 @@ Gate: playtesters ask to keep playing past Day 3.
 - [x] Character lab (`?lab`): KayKit lobby, today's people, slots for each candidate pack
 - [x] Install Kenney Mini Characters and Quaternius Modular in the lab (`scripts/import-characters.sh`)
 - [x] Pick one family, record the choice in `ASSETS.md`, swap it into the game (Quaternius)
-- [ ] Extract the simulation into a pure module: `createGame(seed)`, `step(game, minutes)`, `apply(game, intent)`; no `window`, `localStorage` or `performance` inside
+- [x] Extract the simulation into a pure module: `Game.create(seed)`, `game.simulateMinutes(m)`, `game.apply(intent)`; no `window`, `localStorage` or `performance` inside (`src/sim`, enforced by a test)
 - [ ] Owner avatar: walks the building, click a task to send them there
 - [ ] Energy bar and the Day 1 numbers from the spec (start $1,500, 6 rooms, 2 broken)
 - [ ] Manual tasks: check-in, check-out, hold-to-clean, restock, fix breakdown, complaint dialogue
 - [ ] First hire: candidate at dawn on Day 2, "Delegated" stamp, step back in any time
-- [ ] Save schema version + migration from the current `hotel-tycoon-save-v1`
+- [x] Save schema version + migration from the current `hotel-tycoon-save-v1` (format v2; a real v1 save is a test fixture)
 - [ ] Guest accounts with cloud saves (provider decision pending)
 - [ ] Playtest with 5–10 people, tune numbers, record results below
 
@@ -57,6 +57,10 @@ Gate: playtesters ask to keep playing past Day 3.
 | 2026-10-09 | Quaternius Modular chosen for all people; Kenney removed | The user preferred its look; CC0 |
 | 2026-10-09 | Each outfit is merged to one skinned mesh with vertex colours, then meshopt-compressed | Up to 140 people on screen: 1 draw call each instead of ~10, and 2.3 MB for 10 outfits instead of 1.2 MB each |
 | 2026-10-09 | Capsule people stay as the fallback while the models load | The game is playable immediately on slow connections |
+| 2026-10-09 | Simulation is object-oriented: one class per concept (`Game`, `Building`, `Room`, `Guest`, `Housekeeper`, `Reception`, `Arrivals`, `Ledger`, `Goals`, `Population`, `Random`) | The user asked for modular, OOP code that is easy to optimise; each part can now be measured and replaced alone |
+| 2026-10-09 | Hot loops stay allocation-light: agents get every field in the constructor (one object shape), `Random` is inlined, `Population` indexes ids | Classes must not cost frame time; GC pauses show up as stutter |
+| 2026-10-09 | Behaviour is pinned by a golden master (`tests/unit/fixtures/golden.json`) | Refactors must change nothing; any intended rule change updates the fixture on purpose |
+| 2026-10-09 | `engine.js` stays as a thin facade with the old function API | The UI, tests and trailer keep working; views can move to the classes gradually |
 
 ## Progress log
 
@@ -64,6 +68,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-09 | Simulation rewritten as object-oriented classes in `src/sim` with identical behaviour (golden master over 13 scripted game days, and a real v1 save continues exactly as the old engine did). Save format v2. `game.apply(intent)` command entry point. Benchmark: same speed as before, ~33 ms per busy simulated day |
 | 2026-10-09 | Deployed commit 7dba62c (Quaternius people) to production. First smoke run there: 2 of 10 timed out in software WebGL on the cold first model download; both passed on re-run, then a full run passed 10/10 |
 | 2026-10-09 | Quaternius people in the game: guests, VIPs, housekeepers and receptionists are rigged characters that walk, run (at high game speed), clean and idle. 10 outfits, one draw call each. Reception desk now centred over the receptionists, and the housekeeping cart no longer overlaps receptionist #1. Kenney pack removed; lab shows every outfit |
 | 2026-10-09 | Deployed commit aa30c73 (character packs) to production on Vercel (READY in about 15 s); all 10 smoke tests pass against hotel-tycoon.vercel.app |

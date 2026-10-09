@@ -6,7 +6,7 @@
 
 | Layer | Tool | Where | What it proves | Runs |
 | --- | --- | --- | --- | --- |
-| Unit | Vitest | `tests/unit/` | Game rules: economy, actions, goals, save/load, determinism, invariants | Every push, ~1 s |
+| Unit | Vitest | `tests/unit/` | Game rules: economy, actions, goals, save/load and migration, determinism, invariants, golden master, simulation purity | Every push, ~1 s |
 | Build | Vite | `npm run build` | The production bundle compiles | Every push |
 | Browser smoke | Playwright | `tests/e2e/` | The built game loads, draws WebGL, runs a day, saves across reload, fits the screen | Every push, desktop + mobile, ~2 min |
 | Post-deploy smoke | Playwright | same specs, `BASE_URL=<url>` | The live deployment works | Automatically when Vercel reports a successful deploy to GitHub (`hotel-tycoon-deploy-smoke.yml`); or run the main workflow by hand with a URL |
@@ -28,7 +28,11 @@ In the Claude Code cloud sandbox, add `PW_CHROMIUM_PATH=/opt/pw-browsers/chromiu
 
 | Area | Checks |
 | --- | --- |
-| RNG | Same seed → same sequence; values in [0, 1) |
+| RNG (`sim.test.js`) | Same seed → same sequence; values in [0, 1) |
+| Golden master (`golden.test.js`) | Two scripted games (3 idle days; 10 days of building, hiring, upgrading, firing) reproduce the recorded state exactly: money, rating, rooms, every agent's position and state, random state. Intended rule changes: `UPDATE_GOLDEN=1 npm test`, then review the fixture diff |
+| Saves (`sim.test.js`) | A real v1 save from the old engine loads and continues exactly as the old engine did; mid-game save → load stays identical to the original; floaters/toasts never saved |
+| Commands (`sim.test.js`) | `game.apply(intent)` equals calling the command; unknown intents throw; `onCheckpoint` fires on builds and at midnight |
+| Purity (`sim.test.js`) | Nothing in `src/sim` touches `window`, `document`, storage, `performance`, `Date` or `Math.random` |
 | New game | Starting money, rooms, staff |
 | Determinism | 3 simulated days replay identically from one seed; differ for another |
 | Invariants (10 days, checked hourly) | Money finite; rating in 0.5–5; queue ≤ max; desks = receptionists; occupied rooms point at real guests; amenity users ≤ capacity; no NaN positions |

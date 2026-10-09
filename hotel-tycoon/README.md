@@ -15,6 +15,15 @@ npm test         # unit tests
 npm run check    # unit tests + build + browser smoke tests (the deploy gate)
 ```
 
+## Code layout
+
+| Folder | What | Rule |
+| --- | --- | --- |
+| `src/sim/` | The simulation: `Game`, `Building`, `Room`, `Guest`, `Housekeeper`, `Reception`, `Arrivals`, `Ledger`, `Goals` | Pure and deterministic: no browser APIs (a test enforces it) |
+| `src/game/` | Browser host: the live game (`engine.js`), saves, shared constants, UI store | The only place that touches storage and the wall clock |
+| `src/scene/` | 3D views (React Three Fiber) | Read the game, never change rules |
+| `src/ui/` | HUD | Calls commands on the game |
+
 ## Docs
 
 - [Implementation tracker](docs/IMPLEMENTATION.md): what is built, what is next, decisions, progress log

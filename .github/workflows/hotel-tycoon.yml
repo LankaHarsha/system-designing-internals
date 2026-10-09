@@ -1,0 +1,50 @@
+name: Hotel Tycoon
+
+# Every push and PR touching the game runs unit tests, a production build and
+# browser smoke tests against that build. A deploy is only safe when this is green.
+# Run it by hand with a base_url to smoke-test a live deployment.
+on:
+  push:
+    paths: ['hotel-tycoon/**', '.github/workflows/hotel-tycoon.yml']
+  pull_request:
+    paths: ['hotel-tycoon/**', '.github/workflows/hotel-tycoon.yml']
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Deployed URL to smoke-test (leave empty to test a fresh build)'
+        required: false
+
+defaults:
+  run:
+    working-directory: hotel-tycoon
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
+      BASE_URL: ${{ inputs.base_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hotel-tycoon/package-lock.json
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser smoke tests
+        run: npm run test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: hotel-tycoon/playwright-report
+          retention-days: 7

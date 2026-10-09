@@ -11,7 +11,15 @@ cd hotel-tycoon
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # static build in dist/
+npm test         # unit tests
+npm run check    # unit tests + build + browser smoke tests (the deploy gate)
 ```
+
+## Docs
+
+- [Implementation tracker](docs/IMPLEMENTATION.md): what is built, what is next, decisions, progress log
+- [Test plan](docs/TEST_PLAN.md): test layers, how to run them, rules for new code
+- [Learning notes](docs/learning/): concepts explained as we meet them
 
 ## How to play
 
@@ -32,6 +40,7 @@ Controls: drag to orbit, right-drag or two fingers to pan, scroll to zoom, or us
 | Path | What it does |
 | --- | --- |
 | `src/game/engine.js` | Simulation: guests, queue, desks, housekeepers, amenities, economy, goals, save/load. Plain mutable state, stepped every frame. |
+| `src/game/rng.js` | Seeded random numbers; the state is saved with the game so runs replay exactly |
 | `src/game/constants.js` | Room/staff definitions, costs, world dimensions |
 | `src/game/store.js` | Zustand store: a UI snapshot synced from the engine about 5 times a second, plus tool and selection state |
 | `src/scene/Hotel.jsx` | The cutaway building, lobby, elevator, roof sign and the clickable room slots |
@@ -41,5 +50,7 @@ Controls: drag to orbit, right-drag or two fingers to pan, scroll to zoom, or us
 | `src/scene/Scene.jsx` | Camera rig and map-control API, game loop, floating money text, post-processing (AO, bloom) |
 | `src/ui/HUD.jsx` | Nav bar, KPI cards, tool rail and flyouts, room detail panel, map controls, guest-journey stepper, rooms/staff board, modals |
 | `src/ui/Icon.jsx` | Inline SVG icon set |
+| `tests/unit/` | Vitest tests for the game rules |
+| `tests/e2e/` | Playwright smoke tests against the built game |
 
 The `HQ`/`MQ`/`LQ` button in the corner switches graphics quality. Low quality turns off post-processing for slower devices.

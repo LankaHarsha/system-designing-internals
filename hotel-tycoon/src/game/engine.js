@@ -3,14 +3,21 @@ import {
   WALK_SPEED, ELEV_SPEED, QUEUE_MAX, START_MONEY, ROOM_TYPES, STAFF_TYPES, GUEST_COLORS,
   floorCost, widenCost, slotX,
 } from './constants'
+import { nextRandom, randomSeed } from './rng'
 
 const SAVE_KEY = 'hotel-tycoon-save-v1'
 const CHECKIN_TIME = 10 // game minutes per guest at the desk
 const CLEAN_TIME = 35
 export const TAXI_ARRIVE = 10 // game minutes for a taxi to reach the curb
 
-const rand = (a, b) => a + Math.random() * (b - a)
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+// All simulation randomness goes through random(), whose state is saved with the game.
+function random() {
+  const r = nextRandom(game.rngState)
+  game.rngState = r.state
+  return r.value
+}
+const rand = (a, b) => a + random() * (b - a)
+const pick = (arr) => arr[Math.floor(random() * arr.length)]
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
 
 // Arrival intensity by hour of day
@@ -23,8 +30,10 @@ function emptyDay() {
   return { revenue: 0, rooms: 0, amenities: 0, tips: 0, expenses: 0, guests: 0, lost: 0, missed: 0 }
 }
 
-function createGame() {
+function createGame(seed = randomSeed()) {
   const g = {
+    seed,
+    rngState: seed,
     money: START_MONEY,
     day: 1,
     minute: 9 * 60,
@@ -63,6 +72,13 @@ function placeRoom(g, floor, slot, type) {
 
 export let game = load() || createGame()
 syncStaffAgents()
+
+// Starts a fresh game in memory without touching the saved one (tests, tools).
+export function newGame(seed) {
+  game = createGame(seed)
+  syncStaffAgents()
+  return game
+}
 
 // ---------------------------------------------------------------- geometry helpers
 export const lobbyWidth = () => game.width * SLOT_W
@@ -178,10 +194,10 @@ export function demandMix(r) {
 
 function spawnGuest() {
   const [, pDeluxe, pSuite] = demandMix(game.rating)
-  const roll = Math.random()
+  const roll = random()
   const tier = roll < pSuite ? 2 : roll < pSuite + pDeluxe ? 1 : 0
   // half the guests arrive by taxi, the rest stroll in along the sidewalk
-  const byTaxi = Math.random() < 0.5 && game.taxis.length < 4
+  const byTaxi = random() < 0.5 && game.taxis.length < 4
   const start = byTaxi
     ? { x: curbX(), y: 0, z: CURB_Z - 0.5 }
     : { x: lobbyWidth() + WALK_RANGE + rand(0, 1), y: 0, z: SIDEWALK_Z + rand(-0.4, 0.4) }
@@ -281,8 +297,8 @@ function maybeVisitAmenity(a) {
   if (!options.length) return false
   const weighted = options.map((r) => ({ r, w: amenityPreference(r.type, hour) }))
   const total = weighted.reduce((s, o) => s + o.w, 0)
-  if (Math.random() > 0.22 * Math.min(1.6, total / options.length)) return false
-  let roll = Math.random() * total
+  if (random() > 0.22 * Math.min(1.6, total / options.length)) return false
+  let roll = random() * total
   let chosen = weighted[0].r
   for (const o of weighted) {
     roll -= o.w
@@ -548,14 +564,19 @@ function stepStaff(a, dt) {
 }
 
 // ---------------------------------------------------------------- main step
-export function step(dtReal) {
-  if (!game.speed) return
-  let dt = Math.min(dtReal, 0.1) * MINUTES_PER_SECOND * game.speed
+// Advance the simulation by game minutes, in the same 2-minute ticks as step().
+export function simulateMinutes(minutes) {
+  let dt = minutes
   while (dt > 0) {
     const d = Math.min(dt, 2)
     dt -= d
     tick(d)
   }
+}
+
+export function step(dtReal) {
+  if (!game.speed) return
+  simulateMinutes(Math.min(dtReal, 0.1) * MINUTES_PER_SECOND * game.speed)
 }
 
 function roomCount() {
@@ -769,11 +790,21 @@ export function save() {
     localStorage.setItem(SAVE_KEY, JSON.stringify(rest))
   } catch { /* storage unavailable */ }
 }
+// Replaces the current game with the saved one, if any. Returns true on success.
+export function loadGame() {
+  const loaded = load()
+  if (!loaded) return false
+  game = loaded
+  syncStaffAgents()
+  return true
+}
 function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY)
     if (!raw) return null
     const data = JSON.parse(raw)
+    // saves from before seeded randomness get a fresh seed
+    if (data.rngState == null) data.rngState = data.seed = randomSeed()
     return { ...createGameShell(), ...data, floaters: [], toasts: [] }
   } catch {
     return null
@@ -782,9 +813,9 @@ function load() {
 function createGameShell() {
   return { floaters: [], toasts: [], spawnAcc: 0, lastSummary: null, taxis: [] }
 }
-export function resetGame() {
+export function resetGame(seed) {
   try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
-  game = createGame()
+  game = createGame(seed)
   syncStaffAgents()
   game.structureVersion = Date.now() % 100000
 }

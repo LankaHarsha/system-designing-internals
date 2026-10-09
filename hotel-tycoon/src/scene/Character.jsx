@@ -2,28 +2,28 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js'
+import { CHARACTER_SCALE, CLIPS, modelUrl } from './characters'
 
-// Any rigged glTF/GLB character. Plays the clip whose name matches `clips.idle`,
-// or `clips.walk` while walking back and forth between the two points in `walk`.
-export default function RiggedCharacter({ url, scale = 1, clips, position = [0, 0, 0], rotation = 0, walk }) {
-  const { scene, animations } = useGLTF(url)
+// One standalone character by outfit name (see characters.js), playing `clip`.
+// With `walk: [a, b]` it paces between the two points (used by the character lab).
+// Crowds go through People.jsx instead, which pools clones and mixers.
+export default function Character({ outfit, clip = 'idle', scale = CHARACTER_SCALE, position = [0, 0, 0], rotation = 0, walk }) {
+  const { scene, animations } = useGLTF(modelUrl(outfit))
   const model = useMemo(() => {
     const c = SkeletonUtils.clone(scene)
     c.traverse((o) => {
-      if (o.isMesh) { o.castShadow = true; o.receiveShadow = true }
+      if (o.isMesh) { o.castShadow = true; o.frustumCulled = false }
     })
     return c
   }, [scene])
   const group = useRef()
-  const { actions, names } = useAnimations(animations, group)
+  const { actions } = useAnimations(animations, group)
 
   useEffect(() => {
-    const want = new RegExp(walk ? clips.walk : clips.idle, 'i')
-    const name = names.find((n) => want.test(n)) ?? names[0]
-    const action = name && actions[name]
+    const action = actions[CLIPS[walk ? 'walk' : clip]]
     action?.reset().fadeIn(0.2).play()
     return () => { action?.fadeOut(0.2) }
-  }, [actions, names, walk, clips])
+  }, [actions, walk, clip])
 
   useFrame((state) => {
     if (!walk || !group.current) return

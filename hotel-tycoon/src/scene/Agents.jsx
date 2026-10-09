@@ -17,8 +17,10 @@ function place(mesh, i, x, y, z, rotY, sx, sy = sx, sz = sx) {
   mesh.setMatrixAt(i, dummy.matrix)
 }
 
-// Every guest and housekeeper is drawn from a handful of instanced meshes.
-export default function Agents() {
+// Every guest and housekeeper is drawn from a handful of instanced meshes. With
+// bodies={false} only the mood gems and elevator discs are drawn (People draws the bodies);
+// the capsule bodies remain the stand-in while the character models load.
+export default function Agents({ bodies = true }) {
   const body = useRef()
   const head = useRef()
   const hair = useRef()
@@ -70,19 +72,21 @@ export default function Agents() {
       const sway = walking ? Math.sin(phase) * 0.12 : 0
       const rot = a.heading || 0
 
-      dummy.position.set(x, y + 0.36 * s + bob, z)
-      dummy.rotation.set(0, rot, sway)
-      dummy.scale.setScalar(s)
-      dummy.updateMatrix()
-      body.current.setMatrixAt(i, dummy.matrix)
-      body.current.setColorAt(i, tmpColor.set(a.color))
+      if (bodies) {
+        dummy.position.set(x, y + 0.36 * s + bob, z)
+        dummy.rotation.set(0, rot, sway)
+        dummy.scale.setScalar(s)
+        dummy.updateMatrix()
+        body.current.setMatrixAt(i, dummy.matrix)
+        body.current.setColorAt(i, tmpColor.set(a.color))
 
-      place(head.current, i, x, y + 0.86 * s + bob, z, rot, s)
-      offset.set(0, 0.03, -0.03).applyAxisAngle(THREE.Object3D.DEFAULT_UP, rot)
-      place(hair.current, i, x + offset.x * s, y + (0.89 + offset.y) * s + bob, z + offset.z * s, rot, s)
-      hair.current.setColorAt(i, tmpColor.set(a.kind === 'staff' ? '#ffffff' : a.hair))
+        place(head.current, i, x, y + 0.86 * s + bob, z, rot, s)
+        offset.set(0, 0.03, -0.03).applyAxisAngle(THREE.Object3D.DEFAULT_UP, rot)
+        place(hair.current, i, x + offset.x * s, y + (0.89 + offset.y) * s + bob, z + offset.z * s, rot, s)
+        hair.current.setColorAt(i, tmpColor.set(a.kind === 'staff' ? '#ffffff' : a.hair))
+      }
 
-      if (a.kind === 'staff' && apronCount < MAX) {
+      if (bodies && a.kind === 'staff' && apronCount < MAX) {
         offset.set(0, 0, 0.17).applyAxisAngle(THREE.Object3D.DEFAULT_UP, rot)
         place(apron.current, apronCount++, x + offset.x * s, y + 0.42 * s + bob, z + offset.z * s, rot, s)
       }
@@ -101,7 +105,7 @@ export default function Agents() {
       }
     }
     for (const m of [body, head, hair]) {
-      m.current.count = k
+      m.current.count = bodies ? k : 0
       m.current.instanceMatrix.needsUpdate = true
       if (m.current.instanceColor) m.current.instanceColor.needsUpdate = true
     }

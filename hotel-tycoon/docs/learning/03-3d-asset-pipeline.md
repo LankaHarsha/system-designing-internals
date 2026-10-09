@@ -53,3 +53,18 @@ Three things only showed up by inspecting the downloads:
 | The Suit model holds a pistol | Looking at the lab screenshot | `slim-character.mjs` disposes nodes named pistol/gun/sword |
 
 The Quaternius files were 3 MB each because glTF with embedded buffers stores binary as base64 (+33%) and carries 24 clips. Converting to `.glb` and keeping 6 clips brought them to about 1.2 MB; resampling keyframes barely helped, so the mesh, not the animation, is the bulk.
+
+## 8. Making a crowd affordable
+
+The game can show 140 people. A Quaternius outfit arrives as 4–5 meshes and ~10 materials, so a full hotel would be ~1,400 draw calls (double with shadows). `slim-character.mjs` fixes that before the file ever reaches the browser:
+
+| Step | Why |
+| --- | --- |
+| Bake each material's flat colour into a `COLOR_0` vertex attribute | Lets every part share one material |
+| Concatenate all parts into one primitive (offset the indices) | Parts already share one skin, so one skinned mesh = one draw call |
+| Keep 5 clips, drop channels that hold a bone at rest | Animation JSON was half the file |
+| `meshopt()` (quantize + compress) | drei's `useGLTF` decodes it; ~230 KB per outfit |
+
+In the game, `People.jsx` keeps a pool: one `SkeletonUtils.clone` and one `AnimationMixer` per visible agent, sharing geometry and material. It picks idle / walk / run / work from the agent's state and sets the clip's `timeScale` from the agent's speed so feet don't slide.
+
+**Bugs worth remembering:** (1) disposing an `Animation` in gltf-transform leaves its samplers alive, and they keep every dropped clip's keyframes; dispose the samplers too. (2) `accessor.getElement(i, arr)` fills the first N slots of `arr` but never shortens it, so reusing one scratch array across VEC3 and VEC4 attributes silently pushed a fourth number into every position: the characters rendered as exploded spikes. When a pipeline has several steps, test each step **alone**: three variants that each disabled one step all looked broken, because each still had the faulty one.

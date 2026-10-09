@@ -6,19 +6,18 @@ Every file under `public/assets/` that we did not make, with its licence and sou
 | --- | --- | --- | --- | --- |
 | KayKit Furniture Bits 1.0 (Kay Lousberg) | `public/assets/kaykit/furniture/` | CC0 (see `LICENSE.txt` beside the files) | [GitHub @ 96d5930](https://github.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0) | `scripts/import-kaykit.sh` |
 | KayKit Restaurant Bits 1.0 (Kay Lousberg) | `public/assets/kaykit/restaurant/` | CC0 (see `LICENSE.txt` beside the files) | [GitHub @ 153c8a7](https://github.com/KayKit-Game-Assets/KayKit-Restaurant-Bits-1.0) | `scripts/import-kaykit.sh` |
-| Kenney Mini Characters 1.0 | `public/assets/characters/kenney-mini/` (6 of 12 characters) | CC0 (see `LICENSE.txt` beside the files) | [kenney.nl](https://kenney.nl/assets/mini-characters) | `scripts/import-characters.sh` |
-| Quaternius Ultimate Modular Men + Women | `public/assets/characters/quaternius-modular/` (4 outfits) | CC0 (see `LICENSE.txt` beside the files) | [quaternius.com](https://quaternius.com/packs/ultimatemodularcharacters.html) (Google Drive) | `scripts/import-characters.sh`; converted to GLB, combat clips and the Suit's pistol removed |
+| Quaternius Ultimate Modular Men + Women | `public/assets/characters/quaternius-modular/` (10 outfits) | CC0 (see `LICENSE.txt` beside the files) | [quaternius.com](https://quaternius.com/packs/ultimatemodularcharacters.html) (Google Drive) | `scripts/import-characters.sh`: one mesh + one material per outfit, 5 clips, meshopt-compressed; Suit's pistol removed; Worker outfits recoloured as housekeeping uniforms |
 
-## Character candidates (installed, not chosen yet)
+## Characters
 
-The character lab (`?lab`) compares both packs side by side. To add or swap models, edit the lists in `scripts/import-characters.sh`, re-run it, then update `models` in `public/assets/characters/manifest.json`.
+Chosen 2026-10-09: **Quaternius Ultimate Modular Men + Women**, over Kenney Mini Characters. The outfit list and which role wears what live in `src/scene/characters.js`; the game, the character lab (`?lab`) and the asset tests all read it. To add an outfit, add it to `QUAT` in `scripts/import-characters.sh`, re-run the script, then add the name to `OUTFITS`.
 
-| Stack | Pack | Models | Size | Clips we use |
-| --- | --- | --- | --- | --- |
-| A | Kenney Mini Characters | `character-{male,female}-{a,c,e}.glb` + shared `Textures/colormap.png` | 1.5 MB | `idle`, `walk` (pack has 32, incl. `sit`, `interact-*`, `pick-up`) |
-| B | Quaternius Modular | `male-suit`, `female-formal`, `male-casual-hoodie`, `female-casual` | 4.8 MB | `Idle`, `Walk` (kept: `Idle_Neutral`, `Run`, `Interact`, `Wave`) |
-
-When one family is picked, delete the other pack's folder, its manifest entry and its row above.
+| Role | Outfits |
+| --- | --- |
+| Guest | `male-casual-hoodie`, `female-casual`, `male-casual`, `female-punk`, `male-beach` |
+| VIP (suite tier) | `male-suit`, `female-formal`, `female-suit` |
+| Housekeeper | `male-worker`, `female-worker` (recoloured) |
+| Receptionist | `male-suit`, `female-suit` |
 
 ## Rules
 

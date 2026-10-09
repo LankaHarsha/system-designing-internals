@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { game, buildRoom, demolish, deskX, entranceX, receptionistSpot } from '../game/engine'
@@ -8,6 +8,8 @@ import { useGame, syncUI } from '../game/store'
 import { B, Cyl, Ball, mat, glowMat, env, sphereGeo, T, nightGlass } from './parts'
 import { roomName } from '../game/engine'
 import { FURNITURE, Plant, Sofa, Table } from './Furniture'
+import Character from './Character'
+import { OUTFITS } from './characters'
 
 const FACADE = '#f7f9fd'
 const TRIM = '#ffffff'
@@ -102,6 +104,8 @@ function Lobby({ width, receptionists }) {
   const dx = deskX()
   const ex = entranceX()
   const deskW = receptionists * 1.25 + 0.7
+  // receptionistSpot(i) sits at dx + (i - 1) * 1.25: centre the desk over the spots in use
+  const deskCX = dx + ((receptionists - 1) / 2 - 1) * 1.25
   return (
     <group>
       {/* floor + back wall */}
@@ -114,7 +118,7 @@ function Lobby({ width, receptionists }) {
       <B args={[lw, 0.06, 0.1]} color={TRIM} position={[lw / 2, 0.92, -DEPTH / 2 + 0.14]} shadow={false} />
 
       {/* reception desk */}
-      <group position={[dx, 0, -0.9]}>
+      <group position={[deskCX, 0, -0.9]}>
         <B args={[deskW, 0.95, 0.6]} r={0.08} color={ACCENT} position={[0, 0.475, 0]} />
         <B args={[deskW + 0.15, 0.08, 0.72]} r={0.03} color="#e8c896" position={[0, 0.98, 0]} />
         <Cyl args={[0.08, 0.1, 0.06, 12]} color="#e7c46a" position={[deskW / 2 - 0.25, 1.05, 0.15]} />
@@ -127,7 +131,11 @@ function Lobby({ width, receptionists }) {
       </group>
       {Array.from({ length: receptionists }).map((_, i) => {
         const p = receptionistSpot(i)
-        return <Person key={i} position={[p.x, 0, p.z]} color="#e98a6b" hair="#3b2a20" />
+        return (
+          <Suspense key={i} fallback={<Person position={[p.x, 0, p.z]} color="#e98a6b" hair="#3b2a20" />}>
+            <Character outfit={OUTFITS.receptionist[i % OUTFITS.receptionist.length]} position={[p.x, 0, p.z]} />
+          </Suspense>
+        )
       })}
 
       {/* waiting lounge on the left */}
@@ -136,7 +144,7 @@ function Lobby({ width, receptionists }) {
       <Plant position={[0.4, 0, -1.6]} s={1.4} />
       <Plant position={[lw - 0.45, 0, -1.6]} s={1.4} />
       {/* housekeeping cart */}
-      <group position={[3.6, 0, -1.55]}>
+      <group position={[deskCX - deskW / 2 - 0.55, 0, -1.55]}>
         <B args={[0.7, 0.55, 0.4]} r={0.05} color="#9fd6cb" position={[0, 0.35, 0]} />
         <Cyl args={[0.07, 0.07, 0.05, 8]} color="#3a3845" position={[-0.25, 0.05, 0]} rotation={[Math.PI / 2, 0, 0]} />
         <Cyl args={[0.07, 0.07, 0.05, 8]} color="#3a3845" position={[0.25, 0.05, 0]} rotation={[Math.PI / 2, 0, 0]} />

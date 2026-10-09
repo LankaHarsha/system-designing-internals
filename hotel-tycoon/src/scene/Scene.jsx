@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Html, SoftShadows } from '@react-three/drei'
 import { EffectComposer, Bloom, N8AO, Vignette, ToneMapping } from '@react-three/postprocessing'
@@ -10,6 +10,7 @@ import { SLOT_W, FLOOR_H, ELEV_W, slotX } from '../game/constants'
 import { Lighting, Site } from './Environment'
 import Hotel from './Hotel'
 import Agents from './Agents'
+import People from './People'
 
 function GameLoop() {
   const acc = useRef(0)
@@ -192,7 +193,11 @@ function SceneContent() {
       <Lighting center={center} />
       <Site width={width} />
       <Hotel />
-      <Agents />
+      {/* capsule people until the character models arrive, so the game never waits on them */}
+      <Suspense fallback={<Agents />}>
+        <People />
+        <Agents bodies={false} />
+      </Suspense>
       <Floaters />
     </>
   )

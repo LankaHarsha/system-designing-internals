@@ -14,6 +14,10 @@ async function openGame(page) {
   await page.waitForFunction(() => window.hotel && window.__renderer)
   // wait until the 3D scene has drawn at least one frame
   await page.waitForFunction(() => window.__renderer.info.render.frame > 2, null, { timeout: 30_000 })
+  // the rigged characters have loaded and replaced the capsule stand-ins, then a few more frames
+  await page.waitForFunction(() => window.hotel.peopleReady, null, { timeout: 30_000 })
+  const f = await page.evaluate(() => window.__renderer.info.render.frame)
+  await page.waitForFunction((n) => window.__renderer.info.render.frame > n + 2, f, { timeout: 30_000 })
 }
 
 test('loads, renders the 3D scene and shows the HUD without errors', async ({ page }) => {
@@ -63,7 +67,8 @@ test('character lab loads every asset without errors', async ({ page }) => {
   page.on('response', (r) => { if (r.status() >= 400) missing.push(`${r.status()} ${r.url()}`) })
   await page.goto('./?lab')
   await expect(page.getByRole('heading', { name: 'Character lab' })).toBeVisible()
-  await page.waitForFunction(() => document.querySelectorAll('.lab-label').length >= 3, null, { timeout: 30_000 })
+  // one label for the old capsules, one for the outfits
+  await page.waitForFunction(() => document.querySelectorAll('.lab-label').length >= 2, null, { timeout: 30_000 })
   await page.waitForLoadState('networkidle')
   expect(missing).toEqual([])
   expect(errors).toEqual([])

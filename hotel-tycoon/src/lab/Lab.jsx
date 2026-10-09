@@ -1,17 +1,19 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Html, OrbitControls, SoftShadows } from '@react-three/drei'
 import Prop from './Prop'
-import RiggedCharacter from './RiggedCharacter'
+import Character from '../scene/Character'
+import { MODELS, OUTFITS } from '../scene/characters'
 import CurrentPerson from './CurrentPerson'
 
-// Character lab (open the game with ?lab): one hotel lobby built from KayKit props,
-// with today's people next to each candidate character pack, so we can pick one
-// art family by eye. Packs are listed in public/assets/characters/manifest.json.
+// Character lab (open the game with ?lab): one hotel lobby built from KayKit props with
+// every outfit the game uses (src/scene/characters.js) next to the old capsule people,
+// to judge new outfits by eye before they go into the game.
 
 const ROWS_Z = 3.2
-const GROUP_X = { current: -6.5, A: 0, B: 6.5 }
-const WALK = { current: [[-5.5, 0, -2.6], [-0.5, 0, -2.6]], A: [[-1, 0, -1], [4, 0, -1]], B: [[3, 0, 0.6], [8, 0, 0.6]] }
+const GROUP_X = { current: -6.5, outfits: 3 }
+const WALK = { current: [[-5.5, 0, -2.6], [-0.5, 0, -2.6]], outfits: [[0, 0, 0.6], [7, 0, 0.6]] }
+const LAB_SCALE = 1.2 // KayKit props are about 1.3 units per metre
 
 function Lobby() {
   return (
@@ -80,45 +82,28 @@ function CurrentGroup() {
         <CurrentPerson key={i} {...p} seed={i} position={[x - 1.6 + i * 1.6, 0, ROWS_Z]} />
       ))}
       <CurrentPerson color="#e98a6b" staff walk={WALK.current} seed={7} />
-      <Label position={[x, 3.4, ROWS_Z]} title="Today" sub="in-game people now" />
+      <Label position={[x, 3.4, ROWS_Z]} title="Before" sub="the old capsule people" />
     </group>
   )
 }
 
-function PackGroup({ pack }) {
-  const x = GROUP_X[pack.stack] ?? 0
-  const url = (m) => `./assets/characters/${pack.dir}/${m}`
-  const installed = pack.models.length > 0
+function OutfitGroup() {
+  const x = GROUP_X.outfits
+  const n = MODELS.length
   return (
     <group>
-      {installed ? (
-        <Suspense fallback={null}>
-          {pack.models.slice(0, 3).map((m, i) => (
-            <RiggedCharacter key={m} url={url(m)} scale={pack.scale} clips={pack.clips} position={[x - 1.6 + i * 1.6, 0, ROWS_Z]} />
-          ))}
-          <RiggedCharacter url={url(pack.models[3 % pack.models.length])} scale={pack.scale} clips={pack.clips} walk={WALK[pack.stack]} />
-        </Suspense>
-      ) : (
-        <mesh position={[x, 0.05, ROWS_Z]} receiveShadow>
-          <cylinderGeometry args={[2.2, 2.2, 0.1, 48]} />
-          <meshStandardMaterial color="#e4dccf" />
-        </mesh>
-      )}
-      <Label position={[x, 3.4, ROWS_Z]} title={`${pack.stack} · ${pack.name}`} sub={installed ? pack.license : 'not installed yet'} />
+      <Suspense fallback={null}>
+        {MODELS.map((m, i) => (
+          <Character key={m} outfit={m} scale={LAB_SCALE} position={[x - 6 + (i % 5) * 3 + (i >= 5 ? 1.5 : 0), 0, ROWS_Z + (i >= 5 ? 2.2 : 0)]} />
+        ))}
+        <Character outfit={OUTFITS.housekeeper[0]} scale={LAB_SCALE} walk={WALK.outfits} />
+      </Suspense>
+      <Label position={[x, 3.6, ROWS_Z]} title="Quaternius Modular" sub={`${n} outfits, CC0`} />
     </group>
   )
 }
 
 export default function Lab() {
-  const [packs, setPacks] = useState([])
-  useEffect(() => {
-    // no-store: browsers that visited before the cache fix hold a year-long copy
-    fetch('./assets/characters/manifest.json', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => setPacks(d.packs))
-      .catch(() => setPacks([]))
-  }, [])
-
   return (
     <div className="app lab">
       <Canvas shadows camera={{ fov: 30, position: [20, 17, 26], near: 0.5, far: 200 }}>
@@ -139,19 +124,17 @@ export default function Lab() {
         <Suspense fallback={null}>
           <Lobby />
           <CurrentGroup />
-          {packs.map((p) => <PackGroup key={p.id} pack={p} />)}
+          <OutfitGroup />
         </Suspense>
         <OrbitControls target={[0, 0.8, -1]} maxPolarAngle={Math.PI / 2.2} minDistance={8} maxDistance={60} />
       </Canvas>
       <div className="lab-card">
         <h1>Character lab</h1>
-        <p>Same lobby, same light. Which people belong in this world?</p>
+        <p>Same lobby, same light: every outfit in the game.</p>
         <ul>
-          <li><b>Today</b> — the current in-game people</li>
-          {packs.map((p) => (
-            <li key={p.id}>
-              <b>{p.stack} · {p.name}</b> — {p.models.length ? `${p.models.length} models, ${p.license}` : 'not installed yet'}
-            </li>
+          <li><b>Before</b> — the old capsule people</li>
+          {Object.entries(OUTFITS).map(([role, list]) => (
+            <li key={role}><b>{role}</b> — {list.join(', ')}</li>
           ))}
         </ul>
         <a href="./">← Back to the game</a>

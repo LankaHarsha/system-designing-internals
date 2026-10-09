@@ -22,7 +22,7 @@ npm run check    # unit tests + build + browser smoke tests (the deploy gate)
 - [Learning notes](docs/learning/): concepts explained as we meet them
 - [Third-party assets](ASSETS.md): every pack we ship, its licence and source
 
-Open the game with `?lab` (for example `http://localhost:5173/?lab`) for the character lab: one lobby with today's people beside each candidate character pack.
+Open the game with `?lab` (for example `http://localhost:5173/?lab`) for the character lab: one lobby with every character outfit beside the old capsule people.
 
 ## How to play
 

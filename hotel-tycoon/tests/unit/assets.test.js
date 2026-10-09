@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { CLIPS, MODELS, OUTFITS, modelUrl, outfitFor } from '../../src/scene/characters.js'
+
 const root = join(import.meta.dirname, '../..')
 const pub = join(root, 'public/assets')
 
@@ -29,21 +31,25 @@ describe('asset files', () => {
     }
   })
 
-  it('the character manifest is valid and its model files exist', () => {
-    const { packs } = JSON.parse(readFileSync(join(pub, 'characters/manifest.json'), 'utf8'))
-    expect(packs.length).toBeGreaterThan(0)
-    for (const p of packs) {
-      for (const key of ['id', 'name', 'stack', 'license', 'source', 'dir']) expect(p[key], `${p.id}.${key}`).toBeTruthy()
-      expect(p.clips.idle && p.clips.walk).toBeTruthy()
-      for (const m of p.models) {
-        const file = join(pub, 'characters', p.dir, m)
-        expect(existsSync(file), `${p.id}: ${m}`).toBe(true)
-        // a GLB can still point at external textures (Kenney's do): check those too
-        const doc = m.endsWith('.glb') ? readGlbJson(file) : JSON.parse(readFileSync(file, 'utf8'))
-        for (const img of doc.images ?? []) if (img.uri) expect(existsSync(join(file, '..', img.uri)), `${m}: ${img.uri}`).toBe(true)
-        const clips = (doc.animations ?? []).map((a) => a.name)
-        for (const c of [p.clips.idle, p.clips.walk]) expect(clips.some((n) => new RegExp(c, 'i').test(n)), `${m}: clip ${c}`).toBe(true)
-      }
+  it('every outfit in characters.js exists with all the clips the game plays', () => {
+    expect(MODELS.length).toBeGreaterThan(0)
+    for (const list of Object.values(OUTFITS)) expect(list.length).toBeGreaterThan(0)
+    for (const m of MODELS) {
+      const file = join(root, 'public', modelUrl(m))
+      expect(existsSync(file), m).toBe(true)
+      const doc = readGlbJson(file)
+      for (const img of doc.images ?? []) if (img.uri) expect(existsSync(join(file, '..', img.uri)), `${m}: ${img.uri}`).toBe(true)
+      const clips = (doc.animations ?? []).map((a) => a.name)
+      for (const c of Object.values(CLIPS)) expect(clips, `${m}: clip ${c}`).toContain(c)
+      // one skinned primitive = one draw call per person; crowds depend on it
+      expect(doc.meshes.flatMap((x) => x.primitives).length, `${m}: primitives`).toBe(1)
     }
+  })
+
+  it('outfitFor is stable and picks from the right list', () => {
+    expect(OUTFITS.housekeeper).toContain(outfitFor({ id: 7, kind: 'staff' }))
+    expect(OUTFITS.vip).toContain(outfitFor({ id: 7, kind: 'guest', tier: 2 }))
+    expect(OUTFITS.guest).toContain(outfitFor({ id: 7, kind: 'guest', tier: 0 }))
+    expect(outfitFor({ id: 12, kind: 'guest', tier: 1 })).toBe(outfitFor({ id: 12, kind: 'guest', tier: 1 }))
   })
 })

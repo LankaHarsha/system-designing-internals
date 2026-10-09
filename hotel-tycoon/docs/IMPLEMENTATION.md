@@ -64,6 +64,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-09 | Deployed commit 7dba62c (Quaternius people) to production. First smoke run there: 2 of 10 timed out in software WebGL on the cold first model download; both passed on re-run, then a full run passed 10/10 |
 | 2026-10-09 | Quaternius people in the game: guests, VIPs, housekeepers and receptionists are rigged characters that walk, run (at high game speed), clean and idle. 10 outfits, one draw call each. Reception desk now centred over the receptionists, and the housekeeping cart no longer overlaps receptionist #1. Kenney pack removed; lab shows every outfit |
 | 2026-10-09 | Deployed commit aa30c73 (character packs) to production on Vercel (READY in about 15 s); all 10 smoke tests pass against hotel-tycoon.vercel.app |
 | 2026-10-09 | Installed Kenney Mini Characters (6 GLBs) and Quaternius Modular Men + Women (4 outfits, slimmed to GLB, pistol removed) in the lab, via `scripts/import-characters.sh`. Asset test now also checks external textures and that each model has the manifest's idle and walk clips |

@@ -518,5 +518,137 @@
     "path": 2
    }
   ]
+ },
+ "owner-2-days": {
+  "owner": {
+   "energy": 100,
+   "state": "idle",
+   "task": null,
+   "atDesk": false,
+   "x": 0.9,
+   "y": 0,
+   "z": 0.9
+  },
+  "day": 3,
+  "minute": 480,
+  "money": 3590,
+  "rating": 3.337169,
+  "rngState": -1749139195,
+  "nextId": 61,
+  "floors": 1,
+  "width": 3,
+  "staff": {
+   "housekeeper": 1,
+   "receptionist": 1
+  },
+  "totals": {
+   "guests": 9,
+   "lost": 0,
+   "earned": 990,
+   "bestDay": 440
+  },
+  "today": {
+   "revenue": 220,
+   "rooms": 220,
+   "amenities": 0,
+   "tips": 0,
+   "expenses": 0,
+   "guests": 2,
+   "lost": 0,
+   "missed": 0
+  },
+  "history": [
+   {
+    "day": 1,
+    "revenue": 330,
+    "rooms": 330,
+    "amenities": 0,
+    "tips": 0,
+    "expenses": 200,
+    "guests": 3,
+    "lost": 0,
+    "missed": 5,
+    "wages": 180,
+    "upkeep": 20,
+    "profit": 130,
+    "rating": 3.138347
+   },
+   {
+    "day": 2,
+    "revenue": 440,
+    "rooms": 440,
+    "amenities": 0,
+    "tips": 0,
+    "expenses": 200,
+    "guests": 4,
+    "lost": 0,
+    "missed": 10,
+    "wages": 180,
+    "upkeep": 20,
+    "profit": 240,
+    "rating": 3.286778
+   }
+  ],
+  "goalsDone": [],
+  "queue": [],
+  "desks": [
+   null
+  ],
+  "rooms": [
+   {
+    "key": "1-0",
+    "type": "standard",
+    "status": "occupied",
+    "guestId": 56,
+    "cleanBy": null,
+    "users": []
+   },
+   {
+    "key": "1-1",
+    "type": "standard",
+    "status": "occupied",
+    "guestId": 58,
+    "cleanBy": null,
+    "users": []
+   }
+  ],
+  "agents": [
+   {
+    "id": 1,
+    "kind": "staff",
+    "state": "idle",
+    "mood": "work",
+    "hidden": false,
+    "x": 0.6,
+    "y": 0,
+    "z": -1.5,
+    "heading": 3.141593,
+    "path": 0
+   },
+   {
+    "id": 56,
+    "kind": "guest",
+    "state": "inRoom",
+    "mood": "happy",
+    "hidden": false,
+    "x": 1.411769,
+    "y": 3,
+    "z": 0.563352,
+    "heading": -1.280149,
+    "path": 0
+   },
+   {
+    "id": 58,
+    "kind": "guest",
+    "state": "toRoom",
+    "mood": "happy",
+    "hidden": false,
+    "x": -0.63747,
+    "y": 0,
+    "z": 1.55,
+    "heading": -1.570796,
+    "path": 6
+   }
+  ]
  }
 }

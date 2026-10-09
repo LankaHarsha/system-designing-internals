@@ -6,6 +6,12 @@ export const CHECKIN_TIME = 10 // game minutes per guest at the desk
 export const CLEAN_TIME = 35
 export const TAXI_ARRIVE = 10 // game minutes for a taxi to reach the curb
 export const MAX_GUESTS = 90
+
+// The owner (the player's avatar). Energy refills at midnight.
+export const OWNER_ID = 'owner' // never collides with numeric agent ids
+export const ENERGY_MAX = 100
+export const TIRED_BELOW = 20 // walk at half speed, clean at 60% pace
+export const ENERGY_COST = { checkIn: 3, clean: 8 }
 export const MAX_TAXIS = 4
 
 export const SIDEWALK_Z = DEPTH / 2 + 3.4

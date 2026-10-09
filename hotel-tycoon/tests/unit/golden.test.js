@@ -11,10 +11,15 @@ describe('golden master', () => {
   const results = Object.fromEntries(SCENARIOS.map((s) => {
     engine.newGame(s.seed)
     s.script(engine)
-    return [s.name, project(engine.game)]
+    return [s.name, project(engine.game, { withOwner: s.owner })]
   }))
-  if (process.env.UPDATE_GOLDEN || !existsSync(FILE)) writeFileSync(FILE, JSON.stringify(results, null, 1))
-  const golden = JSON.parse(readFileSync(FILE, 'utf8'))
+  const golden = existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : {}
+  // UPDATE_GOLDEN=1 rewrites every scenario; new scenarios are recorded on first run
+  const missing = SCENARIOS.some((s) => !golden[s.name])
+  if (process.env.UPDATE_GOLDEN || missing) {
+    for (const s of SCENARIOS) if (process.env.UPDATE_GOLDEN || !golden[s.name]) golden[s.name] = results[s.name]
+    writeFileSync(FILE, JSON.stringify(golden, null, 1))
+  }
 
   for (const s of SCENARIOS) {
     it(`${s.name} replays exactly`, () => {

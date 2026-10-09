@@ -85,6 +85,11 @@ export class Building {
     return { x, y: 0, z: 0.45 + row * 0.6 }
   }
 
+  // where the owner waits between tasks: front-left of the lobby, by the lounge
+  get ownerHome() {
+    return { x: 0.9, y: 0, z: 0.9 }
+  }
+
   housekeeperHome(i) {
     return { x: 0.6 + (i % 6) * 0.5, y: 0, z: -1.5 + Math.floor(i / 6) * 0.5 }
   }

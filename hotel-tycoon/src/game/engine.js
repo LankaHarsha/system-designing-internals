@@ -71,6 +71,7 @@ export const addFloor = () => game.addFloor()
 export const widen = () => game.widen()
 export const hire = (role) => game.hire(role)
 export const fire = (role) => game.fire(role)
+export const ownerTask = (task, room) => game.ownerTask(task, room)
 export const setPrice = (mult) => { game.priceMult = mult }
 export const setSpeed = (s) => { game.speed = s }
 

@@ -61,6 +61,28 @@ test('no horizontal page scroll', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0)
 })
 
+test('the owner takes chores from the HUD', async ({ page }) => {
+  const errors = watchErrors(page)
+  await openGame(page)
+  await page.getByRole('button', { name: 'Open the doors' }).click()
+  await page.getByRole('button', { name: /Work the desk/ }).click()
+  await expect.poll(() => page.evaluate(() => window.hotel.game.owner.task?.kind)).toBe('desk')
+  await expect(page.getByRole('button', { name: 'Leave the desk' })).toBeVisible()
+  // make a room dirty with no housekeeper free, select it, and clean it yourself
+  await page.evaluate(() => {
+    const g = window.hotel.game
+    g.staff.housekeeper = 0
+    g.syncStaff()
+    Object.assign(g.rooms['1-1'], { status: 'dirty', guestId: null, cleanBy: null })
+    window.hotel.ui.getState().setSelected('1-1')
+  })
+  await page.getByRole('button', { name: /Clean it yourself/ }).click()
+  await expect.poll(() => page.evaluate(() => window.hotel.game.rooms['1-1'].cleanBy)).toBe('owner')
+  await page.evaluate(() => window.hotel.simulateMinutes(180))
+  await expect.poll(() => page.evaluate(() => window.hotel.game.rooms['1-1'].status)).toBe('vacant')
+  expect(errors).toEqual([])
+})
+
 test('character lab loads every asset without errors', async ({ page }) => {
   const errors = watchErrors(page)
   const missing = []

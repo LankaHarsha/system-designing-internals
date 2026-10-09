@@ -12,10 +12,13 @@ OUT=public/assets/characters
 QUAT_MEN="https://drive.google.com/drive/folders/1USAAquX2JJWuA2m6zol0KUkFe3UkZ8zX"   # Ultimate Modular Men
 QUAT_WOMEN="https://drive.google.com/drive/folders/1720N9IGyQHXYvtvZJzazhxtTTlz-y2Vf" # Ultimate Modular Women
 QUAT="men/Suit:male-suit men/Casual_Hoodie:male-casual-hoodie men/Casual_2:male-casual men/Beach:male-beach men/Worker:male-worker
-women/Formal:female-formal women/Casual:female-casual women/Suit:female-suit women/Punk:female-punk women/Worker:female-worker"
+women/Formal:female-formal women/Casual:female-casual women/Suit:female-suit women/Punk:female-punk women/Worker:female-worker
+men/Casual_2:owner"
 # The Worker outfits are builders (yellow hard hat, orange hi-vis vest); recolour them into a
 # housekeeping uniform: white cap and trim, navy vest and trousers. Linear RGB.
 UNIFORM='{"Worker_Yellow":[0.8,0.8,0.8],"Worker_Vest":[0.03,0.07,0.2],"Brown":[0.02,0.03,0.07],"Brown_02":[0.02,0.03,0.07],"Brown2":[0.015,0.02,0.05],"LightBrown":[0.6,0.6,0.6]}'
+# The owner (you): the casual outfit in the game's accent orange so you can always spot yourself.
+OWNER_LOOK='{"LightBrown":[0.76,0.085,0.028],"LightBlue":[0.02,0.025,0.05]}'
 
 # Quaternius Ultimate Modular Men + Women
 python3 -m venv "$TMP/py" && "$TMP/py/bin/pip" install -q gdown
@@ -36,7 +39,7 @@ cp scripts/slim-character.mjs "$TMP/gt/"
 mkdir -p "$OUT/quaternius-modular"
 for pair in $QUAT; do
   src=${pair%%:*} name=${pair##*:}
-  recolor='{}'; [[ $name == *worker ]] && recolor=$UNIFORM
+  recolor='{}'; [[ $name == *worker ]] && recolor=$UNIFORM; [[ $name == owner ]] && recolor=$OWNER_LOOK
   node "$TMP/gt/slim-character.mjs" "$TMP/${src%%/*}/Individual Characters/glTF/${src##*/}.gltf" "$OUT/quaternius-modular/$name.glb" "$recolor"
 done
 cp "$TMP/men/License.txt" "$OUT/quaternius-modular/LICENSE.txt"

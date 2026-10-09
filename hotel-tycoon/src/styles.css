@@ -304,6 +304,31 @@ small { font-size: 11.5px; }
   100% { transform: translateY(-34px); opacity: 0; }
 }
 
+/* ------------------------------------------------ owner card */
+.btn.accent { background: var(--accent); color: #fff; }
+.btn.accent:hover { background: #f2552f; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.owner-card {
+  position: absolute; left: 76px; top: 170px; width: 260px; background: var(--card); border-radius: var(--r);
+  box-shadow: var(--shadow-lg); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.owner-head { display: flex; gap: 10px; align-items: center; }
+.owner-head b { display: block; font-size: 13px; }
+.owner-head small { color: var(--muted); font-size: 12px; }
+.owner-dot {
+  width: 36px; height: 36px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 11px; font-weight: 700;
+  color: #fff; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.energy { display: flex; flex-direction: column; gap: 4px; }
+.energy small { color: var(--muted); font-size: 11px; }
+.energy small b { color: var(--ink); }
+.energy-bar { height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+.energy-bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffb347, var(--accent)); border-radius: 4px; transition: width 0.3s; }
+.energy-bar.low i { background: var(--red); }
+.owner-actions { display: flex; gap: 8px; }
+.owner-actions .btn { flex: 1; height: 34px; padding: 0 10px; }
+.owner-actions .btn:not(.accent) { background: var(--soft); color: var(--ink); border: 1px solid var(--line); }
+
 /* ------------------------------------------------ responsive */
 @media (max-width: 1280px) {
   .hide-md { display: none !important; }
@@ -335,6 +360,8 @@ small { font-size: 11.5px; }
   .row.static { grid-template-columns: 44px 1fr auto; }
   .row-meta { display: none; }
   .tool-hint { top: 120px; white-space: normal; width: calc(100vw - 32px); }
+  .owner-card { top: auto; bottom: 214px; left: 56px; right: 8px; width: auto; padding: 10px; gap: 8px; }
+  .owner-head small { display: none; }
 }
 
 /* ---------------------------------------------------------------- character lab (?lab) */

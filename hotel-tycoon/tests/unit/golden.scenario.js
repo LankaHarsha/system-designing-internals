@@ -28,13 +28,32 @@ export const SCENARIOS = [
       e.simulateMinutes(3 * 1440)
     },
   },
+  {
+    name: 'owner-2-days',
+    seed: 2024,
+    owner: true,
+    script: (e) => {
+      const g = e.game
+      g.ownerTask('desk')
+      e.simulateMinutes(8 * 60)
+      const dirty = Object.values(g.rooms).find((r) => r.status === 'dirty' && r.cleanBy == null)
+      if (dirty) g.ownerTask('clean', dirty.key)
+      e.simulateMinutes(5 * 60)
+      g.ownerTask('desk')
+      e.simulateMinutes(1440)
+      g.ownerTask('stop')
+      e.simulateMinutes(600)
+    },
+  },
 ]
 
 const r6 = (v) => Math.round(v * 1e6) / 1e6
 
 // Everything that matters about a game, in a stable shape independent of how it is stored.
-export function project(g) {
+// withOwner adds the owner (scenarios recorded before the owner existed leave it out).
+export function project(g, { withOwner = false } = {}) {
   return {
+    ...(withOwner && { owner: { energy: g.owner.energy, state: g.owner.state, task: g.owner.task, atDesk: g.owner.atDesk, x: r6(g.owner.pos.x), y: r6(g.owner.pos.y), z: r6(g.owner.pos.z) } }),
     day: g.day,
     minute: r6(g.minute),
     money: r6(g.money),

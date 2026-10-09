@@ -5,13 +5,19 @@ export class Reception {
     this.desks = desks // guest id being served at each desk, or null
   }
 
+  // the owner's desk is the one after the receptionists', open while the owner stands at it
+  isOwnerDesk(game, i) {
+    return game.owner.atDesk && i === game.staff.receptionist
+  }
+
   remove(id) {
     this.queue = this.queue.filter((q) => q !== id)
   }
 
-  // Match the desks to the number of receptionists, then call the next guest to any free desk.
+  // Match the desks to the receptionists (+1 while the owner works the desk), then call the
+  // next guest to any free desk.
   step(game) {
-    const n = game.staff.receptionist
+    const n = game.staff.receptionist + (game.owner.atDesk ? 1 : 0)
     const desks = this.desks
     while (desks.length < n) desks.push(null)
     if (desks.length > n) {

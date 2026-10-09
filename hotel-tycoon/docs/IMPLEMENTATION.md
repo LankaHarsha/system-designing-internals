@@ -20,7 +20,7 @@ The current build is a polished sandbox with staff from minute one. It is closer
 | Pricing, end-of-day report, goals | Done | |
 | Save | Partial | `localStorage`, one slot; versioned format (v2) that loads v1 saves |
 | Deterministic simulation | Done | Pure object-oriented `src/sim` (`Game`, `Building`, `Guest`, …); golden-master tests pin its behaviour |
-| Owner avatar, energy, manual tasks | Not started | Core of M1 |
+| Owner avatar, energy, manual tasks | Partial | Avatar walks the building, works the desk and cleans rooms; energy 100, refills at midnight, slow when tired. Other chores (check-out, restock, fix, complaints) next |
 | First-hire moment, staff traits | Not started | Game starts with 1 housekeeper + 1 receptionist |
 | Breakdowns, complaints | Not started | |
 | Character asset stack | Done | Quaternius Modular: 10 outfits, rigged and animated in the game |
@@ -36,8 +36,8 @@ Gate: playtesters ask to keep playing past Day 3.
 - [x] Install Kenney Mini Characters and Quaternius Modular in the lab (`scripts/import-characters.sh`)
 - [x] Pick one family, record the choice in `ASSETS.md`, swap it into the game (Quaternius)
 - [x] Extract the simulation into a pure module: `Game.create(seed)`, `game.simulateMinutes(m)`, `game.apply(intent)`; no `window`, `localStorage` or `performance` inside (`src/sim`, enforced by a test)
-- [ ] Owner avatar: walks the building, click a task to send them there
-- [ ] Energy bar and the Day 1 numbers from the spec (start $1,500, 6 rooms, 2 broken)
+- [x] Owner avatar: walks the building, click a task to send them there (work the desk, clean a room)
+- [ ] Energy bar (done) and the Day 1 numbers from the spec (start $1,500, 6 rooms, 2 broken)
 - [ ] Manual tasks: check-in, check-out, hold-to-clean, restock, fix breakdown, complaint dialogue
 - [ ] First hire: candidate at dawn on Day 2, "Delegated" stamp, step back in any time
 - [x] Save schema version + migration from the current `hotel-tycoon-save-v1` (format v2; a real v1 save is a test fixture)
@@ -61,6 +61,8 @@ Gate: playtesters ask to keep playing past Day 3.
 | 2026-10-09 | Hot loops stay allocation-light: agents get every field in the constructor (one object shape), `Random` is inlined, `Population` indexes ids | Classes must not cost frame time; GC pauses show up as stutter |
 | 2026-10-09 | Behaviour is pinned by a golden master (`tests/unit/fixtures/golden.json`) | Refactors must change nothing; any intended rule change updates the fixture on purpose |
 | 2026-10-09 | `engine.js` stays as a thin facade with the old function API | The UI, tests and trailer keep working; views can move to the classes gradually |
+| 2026-10-09 | The owner is its own `Owner` agent with the fixed id `'owner'`, outside the guest/staff population | Keeps every existing agent id and replay identical; old saves gain an owner on load |
+| 2026-10-09 | Owner chores for now: work the desk (an extra desk, 3 energy per check-in) and clean a room (8 energy); staff still start hired | The spec's "step back in on any chore"; the staff-free Day 1 comes with the Day 1 numbers step |
 
 ## Progress log
 
@@ -68,6 +70,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-09 | Owner avatar: you walk the hotel in an orange shirt with a ring at your feet. "You" card with energy bar and Work the desk / Leave the desk; "Clean it yourself" on dirty rooms. Energy 100, refills at midnight, half speed and slower cleaning below 20. The reception desk gained the owner's post. 11 owner unit tests, a third golden scenario, and a browser test that drives the buttons |
 | 2026-10-09 | Simulation rewritten as object-oriented classes in `src/sim` with identical behaviour (golden master over 13 scripted game days, and a real v1 save continues exactly as the old engine did). Save format v2. `game.apply(intent)` command entry point. Benchmark: same speed as before, ~33 ms per busy simulated day |
 | 2026-10-09 | Deployed commit 7dba62c (Quaternius people) to production. First smoke run there: 2 of 10 timed out in software WebGL on the cold first model download; both passed on re-run, then a full run passed 10/10 |
 | 2026-10-09 | Quaternius people in the game: guests, VIPs, housekeepers and receptionists are rigged characters that walk, run (at high game speed), clean and idle. 10 outfits, one draw call each. Reception desk now centred over the receptionists, and the housekeeping cart no longer overlaps receptionist #1. Kenney pack removed; lab shows every outfit |

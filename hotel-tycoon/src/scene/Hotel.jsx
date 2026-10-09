@@ -103,9 +103,11 @@ function Lobby({ width, receptionists }) {
   const lw = width * SLOT_W
   const dx = deskX()
   const ex = entranceX()
-  const deskW = receptionists * 1.25 + 0.7
-  // receptionistSpot(i) sits at dx + (i - 1) * 1.25: centre the desk over the spots in use
-  const deskCX = dx + ((receptionists - 1) / 2 - 1) * 1.25
+  // one post per receptionist plus the owner's post at the end
+  const posts = receptionists + 1
+  const deskW = posts * 1.25 + 0.7
+  // receptionistSpot(i) sits at dx + (i - 1) * 1.25: centre the desk over the posts
+  const deskCX = dx + ((posts - 1) / 2 - 1) * 1.25
   return (
     <group>
       {/* floor + back wall */}

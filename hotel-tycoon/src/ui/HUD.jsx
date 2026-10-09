@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useGame, syncUI } from '../game/store'
 import {
   game, setSpeed, setPrice, addFloor, widen, hire, fire, demolish, upgradeRoom, upgradeCost, UPGRADES,
-  GOALS, demandMix, resetGame, roomName,
+  GOALS, demandMix, resetGame, roomName, ownerTask,
 } from '../game/engine'
+import { ENERGY_COST, ENERGY_MAX } from '../sim'
 import { ROOM_TYPES, STAFF_TYPES, MAX_FLOORS, MAX_WIDTH } from '../game/constants'
 import { camApi } from '../scene/Scene'
 import Icon, { TYPE_ICON } from './Icon'
@@ -405,6 +406,7 @@ const STATUS = {
 
 function Detail({ roomKey }) {
   useGame((s) => s.snap)
+  const owner = useGame((s) => s.snap.owner)
   const setSelected = useGame((s) => s.setSelected)
   const room = game.rooms[roomKey]
   if (!room) return null
@@ -412,7 +414,7 @@ function Detail({ roomKey }) {
   const guest = room.guestId && game.agents.find((a) => a.id === room.guestId)
   const next = UPGRADES[room.type]
   const [label, tone] = def.kind === 'room' ? STATUS[room.status] : [room.users.length ? 'Busy' : 'Open', room.users.length ? 'blue' : 'green']
-  const hk = room.cleanBy && game.agents.find((a) => a.id === room.cleanBy)
+  const cleaner = room.cleanBy != null && game.agentById(room.cleanBy)
   return (
     <div className="detail">
       <div className="detail-head">
@@ -429,7 +431,7 @@ function Detail({ roomKey }) {
       </div>
       <div className="detail-status">
         <span className={`pill ${tone}`}>{label}</span>
-        <small className="muted">{guest ? `Guest #G-${guest.id}` : hk ? 'Housekeeper on the way' : def.kind === 'room' ? 'No guest assigned' : `${room.users.length}/${def.capacity} visitors`}</small>
+        <small className="muted">{guest ? `Guest #G-${guest.id}` : cleaner ? (cleaner.kind === 'owner' ? (room.status === 'cleaning' ? 'You’re cleaning it' : 'You’re on the way') : 'Housekeeper on it') : def.kind === 'room' ? 'No guest assigned' : `${room.users.length}/${def.capacity} visitors`}</small>
       </div>
       <div className="kvs">
         {def.kind === 'room' ? (
@@ -449,6 +451,11 @@ function Detail({ roomKey }) {
         <div className="kv"><span>Build value</span><b>{fmt(def.cost)}</b></div>
       </div>
       <div className="detail-actions">
+        {def.kind === 'room' && room.status === 'dirty' && room.cleanBy == null && (
+          <button className="btn accent" disabled={owner.energy < ENERGY_COST.clean} onClick={act(() => ownerTask('clean', roomKey))}>
+            Clean it yourself · {ENERGY_COST.clean} energy
+          </button>
+        )}
         {next && (
           <button className="btn primary" onClick={act(() => upgradeRoom(roomKey))}>
             Upgrade to {ROOM_TYPES[next].name} · {fmt(upgradeCost(room.type))}
@@ -457,6 +464,43 @@ function Detail({ roomKey }) {
         <button className="btn ghost-danger" onClick={act(() => { if (demolish(roomKey)) setSelected(null) })}>
           Demolish · refund {fmt(def.cost / 2)}
         </button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- you, the owner (left)
+function OwnerCard() {
+  const o = useGame((s) => s.snap.owner)
+  const room = o.task?.room && game.rooms[o.task.room]
+  const doing = !o.task
+    ? 'Free. Select a dirty room to clean it'
+    : o.task.kind === 'desk'
+      ? (o.atDesk ? 'Working the front desk' : 'Walking to the desk')
+      : o.state === 'cleaning' ? `Cleaning room ${room ? roomName(room) : ''}` : `Heading to room ${room ? roomName(room) : ''}`
+  const pct = Math.round((o.energy / ENERGY_MAX) * 100)
+  return (
+    <div className="owner-card">
+      <div className="owner-head">
+        <span className="owner-dot">You</span>
+        <div>
+          <b>You · Owner</b>
+          <small>{doing}</small>
+        </div>
+      </div>
+      <div className="energy" title="Tasks cost energy. It refills overnight; below 20 you walk at half speed.">
+        <div className={`energy-bar ${o.tired ? 'low' : ''}`}><i style={{ width: `${pct}%` }} /></div>
+        <small><b>{Math.round(o.energy)}</b> energy{o.tired ? ' · tired, moving slowly' : ''}</small>
+      </div>
+      <div className="owner-actions">
+        {o.task?.kind === 'desk' ? (
+          <button className="btn" onClick={act(() => ownerTask('stop'))}>Leave the desk</button>
+        ) : (
+          <button className="btn accent" disabled={o.energy < ENERGY_COST.checkIn} onClick={act(() => ownerTask('desk'))}>
+            Work the desk · {ENERGY_COST.checkIn}/guest
+          </button>
+        )}
+        {o.task?.kind === 'clean' && <button className="btn" onClick={act(() => ownerTask('stop'))}>Stop</button>}
       </div>
     </div>
   )
@@ -691,6 +735,7 @@ function Help({ onClose }) {
         <ul>
           <li><span><Icon name="car" size={16} /></span>Guests arrive by taxi or on foot, queue at <b>reception</b> and get the best matching free room.</li>
           <li><span><Icon name="sparkle" size={16} /></span>After check-out a room is <b>dirty</b> — housekeepers clean it before it can be sold again.</li>
+          <li><span><Icon name="person" size={16} /></span><b>You</b> walk the hotel too (orange ring): work the desk or clean a room yourself. Chores cost <b>energy</b>, which refills overnight.</li>
           <li><span><Icon name="building" size={16} /></span>Use the tool rail to build rooms, <b>add floors</b> and <b>widen</b> the hotel.</li>
           <li><span><Icon name="glass" size={16} /></span>Amenities earn extra money and raise guest satisfaction.</li>
           <li><span><Icon name="star" size={16} /></span>Happy guests raise your rating, which brings more — and richer — guests.</li>
@@ -734,6 +779,7 @@ export default function HUD({ quality, setQuality }) {
       </div>
       <Toasts />
       <ToolHint />
+      <OwnerCard />
       <Journey />
       <Board />
       <DaySummary />

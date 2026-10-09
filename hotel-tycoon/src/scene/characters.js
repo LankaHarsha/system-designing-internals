@@ -8,6 +8,7 @@ export const OUTFITS = {
   vip: ['male-suit', 'female-formal', 'female-suit'],
   housekeeper: ['male-worker', 'female-worker'],
   receptionist: ['male-suit', 'female-suit'],
+  owner: ['owner'], // you: the casual outfit in the accent orange
 }
 
 export const MODELS = [...new Set(Object.values(OUTFITS).flat())]
@@ -28,6 +29,7 @@ export const RUN_STRIDE_SPEED = 2.7
 
 // Same agent, same outfit, every frame and after a reload (ids are saved).
 export function outfitFor(agent) {
+  if (agent.kind === 'owner') return OUTFITS.owner[0]
   const list = agent.kind === 'staff' ? OUTFITS.housekeeper : agent.tier === 2 ? OUTFITS.vip : OUTFITS.guest
   return list[agent.id % list.length]
 }

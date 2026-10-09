@@ -6,7 +6,7 @@ Every file under `public/assets/` that we did not make, with its licence and sou
 | --- | --- | --- | --- | --- |
 | KayKit Furniture Bits 1.0 (Kay Lousberg) | `public/assets/kaykit/furniture/` | CC0 (see `LICENSE.txt` beside the files) | [GitHub @ 96d5930](https://github.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0) | `scripts/import-kaykit.sh` |
 | KayKit Restaurant Bits 1.0 (Kay Lousberg) | `public/assets/kaykit/restaurant/` | CC0 (see `LICENSE.txt` beside the files) | [GitHub @ 153c8a7](https://github.com/KayKit-Game-Assets/KayKit-Restaurant-Bits-1.0) | `scripts/import-kaykit.sh` |
-| Quaternius Ultimate Modular Men + Women | `public/assets/characters/quaternius-modular/` (10 outfits) | CC0 (see `LICENSE.txt` beside the files) | [quaternius.com](https://quaternius.com/packs/ultimatemodularcharacters.html) (Google Drive) | `scripts/import-characters.sh`: one mesh + one material per outfit, 5 clips, meshopt-compressed; Suit's pistol removed; Worker outfits recoloured as housekeeping uniforms |
+| Quaternius Ultimate Modular Men + Women | `public/assets/characters/quaternius-modular/` (11 outfits) | CC0 (see `LICENSE.txt` beside the files) | [quaternius.com](https://quaternius.com/packs/ultimatemodularcharacters.html) (Google Drive) | `scripts/import-characters.sh`: one mesh + one material per outfit, 5 clips, meshopt-compressed; Suit's pistol removed; Worker outfits recoloured as housekeeping uniforms |
 
 ## Characters
 
@@ -18,6 +18,7 @@ Chosen 2026-10-09: **Quaternius Ultimate Modular Men + Women**, over Kenney Mini
 | VIP (suite tier) | `male-suit`, `female-formal`, `female-suit` |
 | Housekeeper | `male-worker`, `female-worker` (recoloured) |
 | Receptionist | `male-suit`, `female-suit` |
+| Owner (you) | `owner` (casual outfit recoloured in the accent orange) |
 
 ## Rules
 

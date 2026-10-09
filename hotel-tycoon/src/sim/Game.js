@@ -8,8 +8,8 @@ import { Reception } from './Reception'
 import { Arrivals } from './Arrivals'
 import { Ledger } from './Ledger'
 import { Goals } from './Goals'
-import { Housekeeper, agentFromJSON } from './agents'
-import { UPGRADES, upgradeCost } from './rules'
+import { Housekeeper, Owner, agentFromJSON } from './agents'
+import { OWNER_ID, UPGRADES, upgradeCost } from './rules'
 
 export const SAVE_VERSION = 2
 const TICK = 2 // game minutes per simulation tick
@@ -39,6 +39,8 @@ export class Game {
     this.arrivals = new Arrivals({ spawnAcc: state.spawnAcc, taxis: state.taxis })
     this.ledger = new Ledger(state)
     this.goals = new Goals(state.goalsDone)
+    // the player's avatar; kept out of the population so it never shifts agent ids
+    this.owner = state.owner ? new Owner(state.owner) : Owner.create(this)
 
     // short-lived feedback for the view; never saved
     this.floaters = []
@@ -80,6 +82,7 @@ export class Game {
       spawnAcc: this.arrivals.spawnAcc, taxis: this.arrivals.taxis,
       money: l.money, today: l.today, totals: l.totals, history: l.history, lastSummary: l.lastSummary,
       goalsDone: this.goals.done,
+      owner: this.owner,
     }
   }
 
@@ -105,6 +108,11 @@ export class Game {
   get goalsDone() { return this.goals.done }
   get absTime() { return this.day * 1440 + this.minute }
   get hour() { return Math.floor(this.minute / 60) }
+
+  // any agent by id, the owner included
+  agentById(id) {
+    return id === OWNER_ID ? this.owner : this.population.get(id)
+  }
 
   // ---------------------------------------------------------------- feedback
   floater(text, pos, color = '#3d9a5f') {
@@ -140,6 +148,8 @@ export class Game {
 
     this.arrivals.step(this, dt, hour)
     this.reception.step(this)
+    this.owner.move(dt)
+    this.owner.step(this, dt)
     for (const a of this.population.list) {
       a.move(dt)
       a.step(this, dt)
@@ -154,6 +164,7 @@ export class Game {
     for (const r of this.building.all()) upkeep += r.def.upkeep
     this.ledger.closeDay(this.day, this.rating, wages, upkeep)
     this.day++
+    this.owner.rest()
     this.goals.check(this)
     this.onCheckpoint(this)
   }
@@ -188,6 +199,7 @@ export class Game {
       case 'fire': return this.fire(intent.role)
       case 'setPrice': this.priceMult = intent.mult; return true
       case 'setSpeed': this.speed = intent.speed; return true
+      case 'owner': return this.ownerTask(intent.task, intent.room)
       default: throw new Error(`Unknown intent: ${intent.type}`)
     }
   }
@@ -212,10 +224,7 @@ export class Game {
     const room = this.building.get(key)
     if (!room) return false
     if (room.status === 'occupied' || room.users.length) { this.toast('Wait until the guests are gone', '🙅'); return false }
-    if (room.cleanBy) {
-      const hk = this.population.get(room.cleanBy)
-      if (hk) { hk.state = 'idle'; hk.atHome = false; hk.target = null }
-    }
+    if (room.cleanBy) this.agentById(room.cleanBy)?.abandonRoom()
     const refund = Math.round(room.def.cost * 0.5)
     this.ledger.money += refund
     this.floater(`+$${refund}`, room.center)
@@ -283,6 +292,15 @@ export class Game {
     return true
   }
 
+  // Send the owner: 'clean' (a room key), 'desk', or 'stop'.
+  ownerTask(task, room) {
+    const o = this.owner
+    if (task === 'clean') return o.clean(this, room)
+    if (task === 'desk') return o.workDesk(this)
+    if (task === 'stop') return o.stop(this)
+    throw new Error(`Unknown owner task: ${task}`)
+  }
+
   // after a build: goals may now be met, and it's worth saving
   committed() {
     this.goals.check(this)
@@ -329,6 +347,7 @@ export class Game {
       goalsDone: { ...this.goalsDone },
       structureVersion: b.version,
       lastSummary: this.lastSummary,
+      owner: { energy: this.owner.energy, tired: this.owner.tired, state: this.owner.state, task: this.owner.task && { ...this.owner.task }, atDesk: this.owner.atDesk },
       floorCost: floorCost(b.floors + 1),
       widenCost: widenCost(b.width + 1, b.floors),
     }

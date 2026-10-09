@@ -112,6 +112,7 @@ export class Guest extends Agent {
     this.deskT = (this.deskT || 0) + dt
     this.heading = Math.PI
     if (this.deskT >= CHECKIN_TIME) {
+      if (game.reception.isOwnerDesk(game, this.desk)) game.owner.onCheckIn(game)
       game.reception.desks[this.desk] = null
       this.checkIn(game)
     }

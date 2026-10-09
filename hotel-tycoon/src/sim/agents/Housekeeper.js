@@ -70,6 +70,13 @@ export class Housekeeper extends Agent {
     }
   }
 
+  // the room was demolished under us
+  abandonRoom() {
+    this.state = 'idle'
+    this.atHome = false
+    this.target = null
+  }
+
   becomeIdle() {
     this.state = 'idle'
     this.atHome = false

@@ -112,7 +112,8 @@ function PackGroup({ pack }) {
 export default function Lab() {
   const [packs, setPacks] = useState([])
   useEffect(() => {
-    fetch('./assets/characters/manifest.json')
+    // no-store: browsers that visited before the cache fix hold a year-long copy
+    fetch('./assets/characters/manifest.json', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => setPacks(d.packs))
       .catch(() => setPacks([]))

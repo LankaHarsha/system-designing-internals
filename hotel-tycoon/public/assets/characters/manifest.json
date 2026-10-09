@@ -1,0 +1,26 @@
+{
+  "packs": [
+    {
+      "id": "kenney-mini",
+      "name": "Kenney Mini Characters",
+      "stack": "A",
+      "license": "CC0",
+      "source": "https://kenney.nl/assets/mini-characters",
+      "dir": "kenney-mini",
+      "scale": 1,
+      "clips": { "idle": "idle", "walk": "walk" },
+      "models": []
+    },
+    {
+      "id": "quaternius-modular",
+      "name": "Quaternius Modular Men + Women",
+      "stack": "B",
+      "license": "CC0 (confirm in the download)",
+      "source": "https://quaternius.com",
+      "dir": "quaternius-modular",
+      "scale": 1,
+      "clips": { "idle": "idle", "walk": "walk" },
+      "models": []
+    }
+  ]
+}

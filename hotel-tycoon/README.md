@@ -20,6 +20,9 @@ npm run check    # unit tests + build + browser smoke tests (the deploy gate)
 - [Implementation tracker](docs/IMPLEMENTATION.md): what is built, what is next, decisions, progress log
 - [Test plan](docs/TEST_PLAN.md): test layers, how to run them, rules for new code
 - [Learning notes](docs/learning/): concepts explained as we meet them
+- [Third-party assets](ASSETS.md): every pack we ship, its licence and source
+
+Open the game with `?lab` (for example `http://localhost:5173/?lab`) for the character lab: one lobby with today's people beside each candidate character pack.
 
 ## How to play
 
@@ -50,6 +53,8 @@ Controls: drag to orbit, right-drag or two fingers to pan, scroll to zoom, or us
 | `src/scene/Scene.jsx` | Camera rig and map-control API, game loop, floating money text, post-processing (AO, bloom) |
 | `src/ui/HUD.jsx` | Nav bar, KPI cards, tool rail and flyouts, room detail panel, map controls, guest-journey stepper, rooms/staff board, modals |
 | `src/ui/Icon.jsx` | Inline SVG icon set |
+| `src/lab/` | Character lab (`?lab`): KayKit lobby, rigged-character loader, today's people for comparison |
+| `scripts/import-kaykit.sh` | Copies the KayKit props we use from KayKit's GitHub repos |
 | `tests/unit/` | Vitest tests for the game rules |
 | `tests/e2e/` | Playwright smoke tests against the built game |
 

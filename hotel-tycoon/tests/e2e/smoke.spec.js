@@ -56,3 +56,15 @@ test('no horizontal page scroll', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(0)
 })
+
+test('character lab loads every asset without errors', async ({ page }) => {
+  const errors = watchErrors(page)
+  const missing = []
+  page.on('response', (r) => { if (r.status() >= 400) missing.push(`${r.status()} ${r.url()}`) })
+  await page.goto('./?lab')
+  await expect(page.getByRole('heading', { name: 'Character lab' })).toBeVisible()
+  await page.waitForFunction(() => document.querySelectorAll('.lab-label').length >= 3, null, { timeout: 30_000 })
+  await page.waitForLoadState('networkidle')
+  expect(missing).toEqual([])
+  expect(errors).toEqual([])
+})

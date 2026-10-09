@@ -40,4 +40,16 @@ CC0 means no conditions at all. Other "free" licences can forbid redistributing 
 
 ## 6. Gotcha: what the sandbox can download
 
-The cloud sandbox only reaches GitHub and npm. KayKit publishes official GitHub repos, so `scripts/import-kaykit.sh` clones only the files we need with a **sparse checkout**: `--filter=blob:none` skips downloading file contents, and `sparse-checkout set` fetches just the listed paths. Kenney and Quaternius host their packs on their own sites, which the sandbox blocks, so those need an allowed domain or a manual download.
+The cloud sandbox started out reaching only GitHub and npm. KayKit publishes official GitHub repos, so `scripts/import-kaykit.sh` clones only the files we need with a **sparse checkout**: `--filter=blob:none` skips downloading file contents, and `sparse-checkout set` fetches just the listed paths. Kenney and Quaternius host their packs on their own sites (Quaternius on Google Drive), so `scripts/import-characters.sh` only works once the environment allows full network access.
+
+## 7. Read the file before you trust the pack
+
+Three things only showed up by inspecting the downloads:
+
+| Surprise | Found by | Fix |
+| --- | --- | --- |
+| Kenney's `.glb` files still load `Textures/colormap.png` from beside them | Reading the GLB's JSON chunk (`images[].uri`) | Ship the texture; the unit test now checks every external `uri` |
+| Quaternius clip names include `Idle_Gun`, `Idle_Sword`… so `/idle/i` could pick the wrong one | Listing `animations[].name` | Anchor the patterns in the manifest: `^idle$`, `^walk$` |
+| The Suit model holds a pistol | Looking at the lab screenshot | `slim-character.mjs` disposes nodes named pistol/gun/sword |
+
+The Quaternius files were 3 MB each because glTF with embedded buffers stores binary as base64 (+33%) and carries 24 clips. Converting to `.glb` and keeping 6 clips brought them to about 1.2 MB; resampling keyframes barely helped, so the mesh, not the animation, is the bulk.

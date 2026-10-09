@@ -23,7 +23,7 @@ The current build is a polished sandbox with staff from minute one. It is closer
 | Owner avatar, energy, manual tasks | Not started | Core of M1 |
 | First-hire moment, staff traits | Not started | Game starts with 1 housekeeper + 1 receptionist |
 | Breakdowns, complaints | Not started | |
-| Character asset stack | In progress | Lab page built with KayKit props; character packs not yet downloaded |
+| Character asset stack | In progress | Both candidate packs installed in the lab; family not picked yet |
 | Accounts and cloud saves | Not started | |
 | Tests and CI | Done | See TEST_PLAN.md |
 
@@ -33,7 +33,7 @@ Gate: playtesters ask to keep playing past Day 3.
 
 - [x] Safety net: seeded RNG, unit tests, browser smoke tests, CI workflow
 - [x] Character lab (`?lab`): KayKit lobby, today's people, slots for each candidate pack
-- [ ] Install Kenney Mini Characters and Quaternius Modular in the lab (blocked: sandbox cannot reach kenney.nl or quaternius.com)
+- [x] Install Kenney Mini Characters and Quaternius Modular in the lab (`scripts/import-characters.sh`)
 - [ ] Pick one family, record the choice in `ASSETS.md`, swap it into the game
 - [ ] Extract the simulation into a pure module: `createGame(seed)`, `step(game, minutes)`, `apply(game, intent)`; no `window`, `localStorage` or `performance` inside
 - [ ] Owner avatar: walks the building, click a task to send them there
@@ -53,6 +53,7 @@ Gate: playtesters ask to keep playing past Day 3.
 | 2026-10-09 | CI must be green before any deploy | The user asked for every deploy to be safe |
 | 2026-10-09 | KayKit props are committed to the repo | CC0 allows it, they total about 400 KB, and builds should not depend on a download at deploy time |
 | 2026-10-09 | Deploy to the existing Vercel project; build settings pinned in `vercel.json` | Same host as before; settings in the repo are reviewable and survive dashboard edits |
+| 2026-10-09 | Both character candidate packs are committed, Quaternius slimmed to 4 outfits as GLB | Picking by eye needs them in the real lobby; 6.3 MB total is acceptable until one is dropped |
 
 ## Progress log
 
@@ -60,6 +61,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-09 | Installed Kenney Mini Characters (6 GLBs) and Quaternius Modular Men + Women (4 outfits, slimmed to GLB, pistol removed) in the lab, via `scripts/import-characters.sh`. Asset test now also checks external textures and that each model has the manifest's idle and walk clips |
 | 2026-10-09 | Character lab at `?lab`: lobby from KayKit Furniture + Restaurant Bits (CC0, imported from GitHub), today's people for comparison, manifest-driven slots for candidate packs. Asset-existence unit tests and a lab smoke test. `ASSETS.md` added |
 | 2026-10-09 | Deployed commit 62c0719 to production on Vercel (build READY in about 20 s). Added `vercel.json` and a post-deploy smoke workflow |
 | 2026-10-09 | Added seeded RNG (`src/game/rng.js`), `newGame`, `simulateMinutes`, `loadGame` hooks; 17 unit tests; 4 browser smoke tests × desktop and mobile; GitHub Actions workflow; fixed missing favicon (404 on every load) |

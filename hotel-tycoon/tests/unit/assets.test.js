@@ -5,6 +5,12 @@ import { join } from 'node:path'
 const root = join(import.meta.dirname, '../..')
 const pub = join(root, 'public/assets')
 
+// GLB = 12-byte header, then a JSON chunk (length, type, data)
+const readGlbJson = (file) => {
+  const b = readFileSync(file)
+  return JSON.parse(b.subarray(20, 20 + b.readUInt32LE(12)).toString('utf8'))
+}
+
 describe('asset files', () => {
   it('every KayKit prop used in src/ exists with its .bin and texture', () => {
     const sources = readdirSync(join(root, 'src'), { recursive: true })
@@ -29,7 +35,15 @@ describe('asset files', () => {
     for (const p of packs) {
       for (const key of ['id', 'name', 'stack', 'license', 'source', 'dir']) expect(p[key], `${p.id}.${key}`).toBeTruthy()
       expect(p.clips.idle && p.clips.walk).toBeTruthy()
-      for (const m of p.models) expect(existsSync(join(pub, 'characters', p.dir, m)), `${p.id}: ${m}`).toBe(true)
+      for (const m of p.models) {
+        const file = join(pub, 'characters', p.dir, m)
+        expect(existsSync(file), `${p.id}: ${m}`).toBe(true)
+        // a GLB can still point at external textures (Kenney's do): check those too
+        const doc = m.endsWith('.glb') ? readGlbJson(file) : JSON.parse(readFileSync(file, 'utf8'))
+        for (const img of doc.images ?? []) if (img.uri) expect(existsSync(join(file, '..', img.uri)), `${m}: ${img.uri}`).toBe(true)
+        const clips = (doc.animations ?? []).map((a) => a.name)
+        for (const c of [p.clips.idle, p.clips.walk]) expect(clips.some((n) => new RegExp(c, 'i').test(n)), `${m}: clip ${c}`).toBe(true)
+      }
     }
   })
 })

@@ -9,7 +9,7 @@
 | Unit | Vitest | `tests/unit/` | Game rules: economy, actions, goals, save/load, determinism, invariants | Every push, ~1 s |
 | Build | Vite | `npm run build` | The production bundle compiles | Every push |
 | Browser smoke | Playwright | `tests/e2e/` | The built game loads, draws WebGL, runs a day, saves across reload, fits the screen | Every push, desktop + mobile, ~2 min |
-| Post-deploy smoke | Playwright | same specs, `BASE_URL=<url>` | The live deployment works | After each deploy (manual workflow run for now) |
+| Post-deploy smoke | Playwright | same specs, `BASE_URL=<url>` | The live deployment works | Automatically when Vercel reports a successful deploy to GitHub (`hotel-tycoon-deploy-smoke.yml`); or run the main workflow by hand with a URL |
 | Playtest | People | checklist below | It is fun | Per milestone |
 
 ## Run it

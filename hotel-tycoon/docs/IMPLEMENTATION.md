@@ -5,6 +5,7 @@ Living record of what is built, what is next and why. Update it in the same comm
 - **Spec:** [Hotel Tycoon: Grand Empire — Game Requirements v2](https://claude.ai/code/artifact/3d960caa-ef3a-4317-a579-0147cca04d9d)
 - **Test plan:** [TEST_PLAN.md](TEST_PLAN.md)
 - **Learning notes:** [learning/](learning/)
+- **Live game:** https://hotel-tycoon.vercel.app (Vercel project `hotel-tycoon`, root directory `hotel-tycoon/`)
 
 ## Where the game stands (2026-10-09)
 
@@ -47,7 +48,8 @@ Gate: playtesters ask to keep playing past Day 3.
 | --- | --- | --- |
 | 2026-10-09 | All simulation randomness goes through a seeded RNG whose state is saved | Replays, tests and later server validation need identical results from identical inputs |
 | 2026-10-09 | Smoke tests drive the game through `window.hotel` | Clicking a 3D canvas is brittle; the hook tests the real build without pixel hunting |
-| 2026-10-09 | CI must be green before any deploy | The user asked for every deploy to be safe; no deploy target is configured yet |
+| 2026-10-09 | CI must be green before any deploy | The user asked for every deploy to be safe |
+| 2026-10-09 | Deploy to the existing Vercel project; build settings pinned in `vercel.json` | Same host as before; settings in the repo are reviewable and survive dashboard edits |
 
 ## Progress log
 
@@ -55,4 +57,5 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-09 | Deployed commit 62c0719 to production on Vercel (build READY in about 20 s). Added `vercel.json` and a post-deploy smoke workflow |
 | 2026-10-09 | Added seeded RNG (`src/game/rng.js`), `newGame`, `simulateMinutes`, `loadGame` hooks; 17 unit tests; 4 browser smoke tests × desktop and mobile; GitHub Actions workflow; fixed missing favicon (404 on every load) |

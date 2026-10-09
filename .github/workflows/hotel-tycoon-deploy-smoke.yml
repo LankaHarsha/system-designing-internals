@@ -1,0 +1,38 @@
+name: Hotel Tycoon post-deploy smoke
+
+# Vercel reports each finished deployment to GitHub. When one succeeds, run the
+# browser smoke tests against the live URL, so we test what players actually get.
+on:
+  deployment_status:
+
+jobs:
+  smoke:
+    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.target_url, 'hotel-tycoon')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: hotel-tycoon
+    env:
+      CI: true
+      BASE_URL: ${{ github.event.deployment_status.target_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hotel-tycoon/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Smoke-test the deployment
+        run: npm run test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-smoke-report
+          path: hotel-tycoon/playwright-report
+          retention-days: 7

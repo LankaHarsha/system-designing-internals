@@ -470,37 +470,71 @@ function Detail({ roomKey }) {
 }
 
 // ---------------------------------------------------------------- you, the owner (left)
+const OWNER_CARD_KEY = 'hotel-tycoon-owner-card'
+const isPhone = () => typeof matchMedia === 'function' && matchMedia('(max-width: 640px)').matches
+
 function OwnerCard() {
   const o = useGame((s) => s.snap.owner)
+  // phones start folded so the card never sits on top of the hotel; the choice is remembered
+  const [open, setOpenState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(OWNER_CARD_KEY)
+      if (saved) return saved === 'open'
+    } catch { /* storage blocked */ }
+    return !isPhone()
+  })
+  const setOpen = (v) => {
+    setOpenState(v)
+    try { localStorage.setItem(OWNER_CARD_KEY, v ? 'open' : 'closed') } catch { /* ignore */ }
+  }
+  // on a phone, fold away once a chore is chosen so you can watch it happen
+  const choose = (task) => act(() => {
+    ownerTask(task)
+    if (isPhone()) setOpenState(false)
+  })
+
   const room = o.task?.room && game.rooms[o.task.room]
+  const short = !o.task ? 'Free' : o.task.kind === 'desk' ? 'At the desk' : o.state === 'cleaning' ? 'Cleaning' : 'On the way'
   const doing = !o.task
     ? 'Free. Select a dirty room to clean it'
     : o.task.kind === 'desk'
       ? (o.atDesk ? 'Working the front desk' : 'Walking to the desk')
       : o.state === 'cleaning' ? `Cleaning room ${room ? roomName(room) : ''}` : `Heading to room ${room ? roomName(room) : ''}`
   const pct = Math.round((o.energy / ENERGY_MAX) * 100)
+  const bar = <div className={`energy-bar ${o.tired ? 'low' : ''}`}><i style={{ width: `${pct}%` }} /></div>
+
+  if (!open) {
+    return (
+      <button className="owner-chip" onClick={() => setOpen(true)} aria-label="Show your owner card">
+        <span className="owner-dot sm">You</span>
+        <span className="chip-text"><b>{Math.round(o.energy)}</b> energy · {short}</span>
+        {bar}
+      </button>
+    )
+  }
   return (
     <div className="owner-card">
       <div className="owner-head">
         <span className="owner-dot">You</span>
-        <div>
+        <div className="grow">
           <b>You · Owner</b>
           <small>{doing}</small>
         </div>
+        <button className="icon-btn" title="Fold away" aria-label="Fold away" onClick={() => setOpen(false)}><Icon name="down" size={15} /></button>
       </div>
       <div className="energy" title="Tasks cost energy. It refills overnight; below 20 you walk at half speed.">
-        <div className={`energy-bar ${o.tired ? 'low' : ''}`}><i style={{ width: `${pct}%` }} /></div>
+        {bar}
         <small><b>{Math.round(o.energy)}</b> energy{o.tired ? ' · tired, moving slowly' : ''}</small>
       </div>
       <div className="owner-actions">
         {o.task?.kind === 'desk' ? (
-          <button className="btn" onClick={act(() => ownerTask('stop'))}>Leave the desk</button>
+          <button className="btn" onClick={choose('stop')}>Leave the desk</button>
         ) : (
-          <button className="btn accent" disabled={o.energy < ENERGY_COST.checkIn} onClick={act(() => ownerTask('desk'))}>
+          <button className="btn accent" disabled={o.energy < ENERGY_COST.checkIn} onClick={choose('desk')}>
             Work the desk · {ENERGY_COST.checkIn}/guest
           </button>
         )}
-        {o.task?.kind === 'clean' && <button className="btn" onClick={act(() => ownerTask('stop'))}>Stop</button>}
+        {o.task?.kind === 'clean' && <button className="btn" onClick={choose('stop')}>Stop</button>}
       </div>
     </div>
   )

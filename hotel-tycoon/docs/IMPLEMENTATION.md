@@ -70,6 +70,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-10 | Phones: the "You" card no longer covers the hotel. It starts folded into a small chip (energy + what you're doing), opens on tap, folds itself away after you pick a chore, and remembers your choice. Desktop can fold it too |
 | 2026-10-09 | Owner avatar: you walk the hotel in an orange shirt with a ring at your feet. "You" card with energy bar and Work the desk / Leave the desk; "Clean it yourself" on dirty rooms. Energy 100, refills at midnight, half speed and slower cleaning below 20. The reception desk gained the owner's post. 10 owner unit tests, a third golden scenario, and a browser test that drives the buttons |
 | 2026-10-09 | Simulation rewritten as object-oriented classes in `src/sim` with identical behaviour (golden master over 13 scripted game days, and a real v1 save continues exactly as the old engine did). Save format v2. `game.apply(intent)` command entry point. Benchmark: same speed as before, ~33 ms per busy simulated day |
 | 2026-10-09 | Deployed commit 7dba62c (Quaternius people) to production. First smoke run there: 2 of 10 timed out in software WebGL on the cold first model download; both passed on re-run, then a full run passed 10/10 |

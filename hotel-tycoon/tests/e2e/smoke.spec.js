@@ -65,8 +65,12 @@ test('the owner takes chores from the HUD', async ({ page }) => {
   const errors = watchErrors(page)
   await openGame(page)
   await page.getByRole('button', { name: 'Open the doors' }).click()
+  // phones show the folded chip first
+  const chip = page.getByRole('button', { name: 'Show your owner card' })
+  if (await chip.isVisible()) await chip.click()
   await page.getByRole('button', { name: /Work the desk/ }).click()
   await expect.poll(() => page.evaluate(() => window.hotel.game.owner.task?.kind)).toBe('desk')
+  if (await chip.isVisible()) await chip.click() // folded itself away on the phone
   await expect(page.getByRole('button', { name: 'Leave the desk' })).toBeVisible()
   // make a room dirty with no housekeeper free, select it, and clean it yourself
   await page.evaluate(() => {

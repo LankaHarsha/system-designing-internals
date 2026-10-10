@@ -83,7 +83,11 @@ test('the owner takes chores from the HUD', async ({ page }) => {
   await page.getByRole('button', { name: /Clean it yourself/ }).click()
   await expect.poll(() => page.evaluate(() => window.hotel.game.rooms['1-1'].cleanBy)).toBe('owner')
   await page.evaluate(() => window.hotel.simulateMinutes(180))
-  await expect.poll(() => page.evaluate(() => window.hotel.game.rooms['1-1'].status)).toBe('vacant')
+  // cleaned and released (a new guest may already have checked in, so vacant or occupied)
+  await expect.poll(() => page.evaluate(() => {
+    const r = window.hotel.game.rooms['1-1']
+    return r.cleanBy === null && ['vacant', 'occupied'].includes(r.status) && window.hotel.game.owner.task?.kind !== 'clean'
+  })).toBe(true)
   expect(errors).toEqual([])
 })
 

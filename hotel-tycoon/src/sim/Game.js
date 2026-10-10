@@ -1,5 +1,6 @@
 import {
-  FLOOR_H, MAX_FLOORS, MAX_WIDTH, ROOM_TYPES, START_MONEY, STAFF_TYPES, floorCost, slotX, widenCost,
+  DAILY_FIXED_COSTS, FLOOR_H, MAX_FLOORS, MAX_WIDTH, ROOM_TYPES, START_MONEY, START_RATING, STAFF_TYPES, floorCost, slotX,
+  widenCost,
 } from '../game/constants'
 import { Random } from './Random'
 import { Building } from './Building'
@@ -9,7 +10,7 @@ import { Arrivals } from './Arrivals'
 import { Ledger } from './Ledger'
 import { Goals } from './Goals'
 import { Housekeeper, Owner, agentFromJSON } from './agents'
-import { OWNER_ID, UPGRADES, upgradeCost } from './rules'
+import { INN, OWNER_ID, UPGRADES, upgradeCost } from './rules'
 
 export const SAVE_VERSION = 2
 const TICK = 2 // game minutes per simulation tick
@@ -47,16 +48,18 @@ export class Game {
     this.toasts = []
   }
 
+  // Day 1: you inherit a run-down inn with no staff (spec Act 1).
   static create(seed, options) {
     const game = new Game({
-      seed, rngState: seed, money: START_MONEY, day: 1, minute: 9 * 60, speed: 1, rating: 3.0,
-      floors: 1, width: 3, rooms: {}, agents: [], queue: [], desks: [], nextId: 1,
-      staff: { housekeeper: 1, receptionist: 1 }, priceMult: 1, goalsDone: {}, structureVersion: 0,
+      seed, rngState: seed, money: START_MONEY, day: 1, minute: 9 * 60, speed: 1, rating: START_RATING,
+      floors: INN.floors, width: INN.width, rooms: {}, agents: [], queue: [], desks: [], nextId: 1,
+      staff: { housekeeper: 0, receptionist: 0 }, priceMult: 1, goalsDone: {}, structureVersion: 0,
       spawnAcc: 0, taxis: [],
     }, options)
-    game.building.place(1, 0, 'standard')
-    game.building.place(1, 1, 'standard')
-    game.syncStaff()
+    for (let floor = 1; floor <= INN.floors; floor++) {
+      for (let slot = 0; slot < INN.width; slot++) game.building.place(floor, slot, INN.room)
+    }
+    for (const key of INN.broken) game.building.get(key).status = 'broken'
     return game
   }
 
@@ -162,6 +165,7 @@ export class Game {
     for (const k of Object.keys(this.staff)) wages += this.staff[k] * STAFF_TYPES[k].wage
     let upkeep = 0
     for (const r of this.building.all()) upkeep += r.def.upkeep
+    upkeep += DAILY_FIXED_COSTS
     this.ledger.closeDay(this.day, this.rating, wages, upkeep)
     this.day++
     this.owner.rest()
@@ -284,7 +288,7 @@ export class Game {
   }
 
   fire(role) {
-    if (this.staff[role] <= (role === 'receptionist' ? 1 : 0)) return false
+    if (this.staff[role] <= 0) return false // the owner can always work the desk
     this.staff[role]--
     this.syncStaff()
     this.building.version++
@@ -292,10 +296,11 @@ export class Game {
     return true
   }
 
-  // Send the owner: 'clean' (a room key), 'desk', or 'stop'.
+  // Send the owner: 'clean' or 'fix' (with a room key), 'desk', or 'stop'.
   ownerTask(task, room) {
     const o = this.owner
     if (task === 'clean') return o.clean(this, room)
+    if (task === 'fix') return o.fix(this, room)
     if (task === 'desk') return o.workDesk(this)
     if (task === 'stop') return o.stop(this)
     throw new Error(`Unknown owner task: ${task}`)
@@ -315,6 +320,7 @@ export class Game {
     const guestRooms = b.all().filter((r) => r.isGuestRoom)
     const occupied = guestRooms.filter((r) => r.status === 'occupied').length
     const dirty = guestRooms.filter((r) => r.status === 'dirty' || r.status === 'cleaning').length
+    const broken = guestRooms.filter((r) => r.status === 'broken').length
     const journey = { arriving: 0, queue: 0, checkin: 0, staying: 0, leaving: 0 }
     let guests = 0
     for (const a of this.population.list) {
@@ -340,6 +346,7 @@ export class Game {
       totalRooms: guestRooms.length,
       occupied,
       dirty,
+      broken,
       queue: this.reception.queue.length,
       guests,
       today: { ...this.today },

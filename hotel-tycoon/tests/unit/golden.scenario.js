@@ -1,39 +1,47 @@
 // Scripted games used as a golden master: the same seed and the same player actions must
-// produce exactly the recorded state. Any intended change to game rules must update the
+// produce exactly the recorded state. Re-recorded on 2026-10-10 for the Day 1 start (6-room
+// inn, no staff); the scripts hire and expand so every system still gets exercised. Any intended change to game rules must update the
 // fixture on purpose (UPDATE_GOLDEN=1 npm test), so accidental changes can't slip through.
 
 export const SCENARIOS = [
+  // nobody minds the inn: guests queue, give up and walk out
   { name: 'idle-3-days', seed: 99, script: (e) => { e.simulateMinutes(3 * 1440) } },
   {
     name: 'builder-10-days',
     seed: 12345,
     script: (e) => {
-      e.buildRoom(1, 2, 'standard')
-      e.simulateMinutes(1440)
+      e.game.money += 30000
+      e.hire('receptionist')
       e.hire('housekeeper')
-      e.setPrice(1.2)
+      e.ownerTask('fix', '1-2')
       e.simulateMinutes(1440)
-      e.game.money += 20000
-      e.addFloor()
-      e.buildRoom(2, 0, 'deluxe')
-      e.buildRoom(2, 1, 'restaurant')
+      e.ownerTask('fix', '2-1')
+      e.setPrice(1.2)
       e.upgradeRoom('1-0')
+      e.simulateMinutes(1440)
+      e.addFloor()
+      e.buildRoom(3, 0, 'deluxe')
+      e.buildRoom(3, 1, 'restaurant')
       e.simulateMinutes(3 * 1440)
       e.widen()
       e.hire('receptionist')
+      e.hire('housekeeper')
       e.buildRoom(1, 3, 'suite')
       e.simulateMinutes(2 * 1440)
       e.fire('housekeeper')
-      e.demolish('2-1')
+      e.demolish('3-1')
       e.simulateMinutes(3 * 1440)
     },
   },
   {
+    // the spec's Day 1: you alone, fixing, working the desk and cleaning
     name: 'owner-2-days',
     seed: 2024,
     owner: true,
     script: (e) => {
       const g = e.game
+      g.ownerTask('fix', '1-2')
+      e.simulateMinutes(150) // walk there (~1 h) and fix (40 min)
       g.ownerTask('desk')
       e.simulateMinutes(8 * 60)
       const dirty = Object.values(g.rooms).find((r) => r.status === 'dirty' && r.cleanBy == null)

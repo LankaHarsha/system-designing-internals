@@ -11,7 +11,7 @@ export class Arrivals {
   // Guests per hour right now: time of day × rating × price × size, cut when full.
   rate(game, hour) {
     const b = game.building
-    const anyVacant = b.all().some((r) => r.isGuestRoom && r.status !== 'occupied')
+    const anyVacant = b.all().some((r) => r.isGuestRoom && r.status !== 'occupied' && r.status !== 'broken')
     const ratingF = 0.3 + (game.rating / 5) * 1.0
     const priceF = Math.pow(1 / game.priceMult, 1.8)
     const capF = 0.6 + b.countGuestRooms() * 0.45

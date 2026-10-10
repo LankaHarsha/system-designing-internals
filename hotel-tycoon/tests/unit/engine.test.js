@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import * as engine from '../../src/game/engine'
-import { QUEUE_MAX, ROOM_TYPES, STAFF_TYPES, START_MONEY, floorCost } from '../../src/game/constants'
+import { DAILY_FIXED_COSTS, QUEUE_MAX, ROOM_TYPES, START_MONEY, START_RATING, floorCost, widenCost } from '../../src/game/constants'
 
 // In-memory localStorage so save/load can run under Node.
 const store = new Map()
@@ -19,12 +19,19 @@ beforeEach(() => {
 })
 
 describe('new game', () => {
-  it('starts with the documented state', () => {
-    expect(g().money).toBe(START_MONEY)
+  it('starts as the spec\'s Day 1: a 6-room inn, 2 rooms broken, $1,500, 2.5★, no staff', () => {
+    expect(g().money).toBe(1500)
+    expect(START_MONEY).toBe(1500)
+    expect(g().rating).toBe(START_RATING)
     expect(g().day).toBe(1)
-    expect(Object.keys(g().rooms)).toEqual(['1-0', '1-1'])
-    expect(g().staff).toEqual({ housekeeper: 1, receptionist: 1 })
-    expect(g().agents.filter((a) => a.kind === 'staff')).toHaveLength(1)
+    expect(g().floors).toBe(2)
+    expect(Object.keys(g().rooms)).toEqual(['1-0', '1-1', '1-2', '2-0', '2-1', '2-2'])
+    expect(Object.values(g().rooms).every((r) => r.type === 'inn')).toBe(true)
+    expect(Object.values(g().rooms).filter((r) => r.status === 'broken').map((r) => r.key)).toEqual(['1-2', '2-1'])
+    expect(ROOM_TYPES.inn.price).toBe(40)
+    expect(g().staff).toEqual({ housekeeper: 0, receptionist: 0 })
+    expect(g().agents).toHaveLength(0)
+    expect(engine.snapshot().broken).toBe(2)
   })
 })
 
@@ -47,7 +54,11 @@ describe('determinism', () => {
 
 describe('simulation invariants over 10 days', () => {
   it('keeps the world consistent every hour', () => {
-    engine.buildRoom(1, 2, 'standard')
+    g().money = 100000
+    engine.hire('receptionist')
+    engine.hire('housekeeper')
+    engine.widen()
+    engine.buildRoom(1, 3, 'standard')
     for (let h = 0; h < 240; h++) {
       engine.simulateMinutes(60)
       const game = g()
@@ -55,7 +66,7 @@ describe('simulation invariants over 10 days', () => {
       expect(game.rating).toBeGreaterThanOrEqual(0.5)
       expect(game.rating).toBeLessThanOrEqual(5)
       expect(game.queue.length).toBeLessThanOrEqual(QUEUE_MAX)
-      expect(game.desks.length).toBe(game.staff.receptionist)
+      expect(game.desks.length).toBe(game.staff.receptionist + (game.owner.atDesk ? 1 : 0))
       const ids = new Set(game.agents.map((a) => a.id))
       for (const room of Object.values(game.rooms)) {
         if (room.status === 'occupied') expect(ids.has(room.guestId)).toBe(true)
@@ -72,14 +83,16 @@ describe('simulation invariants over 10 days', () => {
 })
 
 describe('end of day', () => {
-  it('charges wages and upkeep and records a summary', () => {
+  it('charges wages, upkeep and fixed costs and records a summary', () => {
+    g().money = 10000
+    engine.hire('housekeeper')
     engine.simulateMinutes(DAY - 9 * 60 - 1) // just before midnight
     const before = g().money
     const revenueSoFar = g().today.revenue
     engine.simulateMinutes(1)
     const s = g().lastSummary
-    const wages = STAFF_TYPES.housekeeper.wage + STAFF_TYPES.receptionist.wage
-    const upkeep = 2 * ROOM_TYPES.standard.upkeep
+    const wages = 30 // one housekeeper, per the spec's Day 1 sheet
+    const upkeep = 6 * ROOM_TYPES.inn.upkeep + DAILY_FIXED_COSTS
     expect(s.day).toBe(1)
     expect(s.wages).toBe(wages)
     expect(s.upkeep).toBe(upkeep)
@@ -92,65 +105,90 @@ describe('end of day', () => {
 
 describe('player actions', () => {
   it('builds a room and charges for it', () => {
-    expect(engine.buildRoom(1, 2, 'standard')).toBe(true)
-    expect(g().money).toBe(START_MONEY - ROOM_TYPES.standard.cost)
-    expect(g().rooms['1-2'].status).toBe('vacant')
+    g().money = 100000
+    g().goalsDone.widen = true
+    engine.widen()
+    const before = g().money
+    expect(engine.buildRoom(1, 3, 'standard')).toBe(true)
+    expect(g().money).toBe(before - ROOM_TYPES.standard.cost)
+    expect(g().rooms['1-3'].status).toBe('vacant')
+  })
+
+  it('cannot afford to grow on Day 1', () => {
+    expect(floorCost(3)).toBeGreaterThan(START_MONEY)
+    expect(widenCost(4, 2)).toBeGreaterThan(START_MONEY)
+    expect(engine.addFloor()).toBe(false)
+    expect(engine.widen()).toBe(false)
   })
 
   it('refuses taken slots, bad slots and unaffordable rooms', () => {
     expect(engine.buildRoom(1, 0, 'standard')).toBe(false)
-    expect(engine.buildRoom(2, 0, 'standard')).toBe(false) // floor not built
+    expect(engine.buildRoom(3, 0, 'standard')).toBe(false) // floor not built
     expect(engine.buildRoom(1, 9, 'standard')).toBe(false)
+    g().money = 100000
+    engine.widen()
     g().money = 10
-    expect(engine.buildRoom(1, 2, 'suite')).toBe(false)
+    expect(engine.buildRoom(1, 3, 'suite')).toBe(false)
     expect(g().money).toBe(10)
   })
 
   it('refunds half the cost on demolish', () => {
-    engine.buildRoom(1, 2, 'deluxe')
     const before = g().money
-    expect(engine.demolish('1-2')).toBe(true)
-    expect(g().money).toBe(before + ROOM_TYPES.deluxe.cost / 2)
-    expect(g().rooms['1-2']).toBeUndefined()
+    expect(engine.demolish('1-0')).toBe(true)
+    expect(g().money).toBe(before + ROOM_TYPES.inn.cost / 2)
+    expect(g().rooms['1-0']).toBeUndefined()
   })
 
-  it('upgrades a vacant room for the documented price', () => {
-    g().goalsDone.deluxe = true // keep the goal reward out of the sum
-    const cost = engine.upgradeCost('standard')
-    expect(cost).toBe(ROOM_TYPES.deluxe.cost - ROOM_TYPES.standard.cost / 2)
+  it('upgrades an inn room to a Cozy Room for the documented price', () => {
+    const cost = engine.upgradeCost('inn')
+    expect(cost).toBe(ROOM_TYPES.standard.cost - ROOM_TYPES.inn.cost / 2)
     expect(engine.upgradeRoom('1-0')).toBe(true)
-    expect(g().rooms['1-0'].type).toBe('deluxe')
+    expect(g().rooms['1-0'].type).toBe('standard')
     expect(g().money).toBe(START_MONEY - cost)
   })
 
-  it('adds a floor at floorCost', () => {
-    g().goalsDone.floor2 = true
-    g().money = 100000
-    expect(engine.addFloor()).toBe(true)
-    expect(g().floors).toBe(2)
-    expect(g().money).toBe(100000 - floorCost(2))
+  it('will not upgrade a broken room', () => {
+    expect(engine.upgradeRoom('1-2')).toBe(false)
+    expect(g().rooms['1-2'].type).toBe('inn')
   })
 
-  it('hires and fires within limits', () => {
+  it('adds a floor at floorCost', () => {
+    g().goalsDone.floor3 = true
+    g().money = 100000
+    expect(engine.addFloor()).toBe(true)
+    expect(g().floors).toBe(3)
+    expect(g().money).toBe(100000 - floorCost(3))
+  })
+
+  it('hires at the spec\'s signing fees and fires within limits', () => {
+    g().goalsDone.firstHire = true
     expect(engine.hire('housekeeper')).toBe(true)
-    expect(g().staff.housekeeper).toBe(2)
-    expect(g().agents.filter((a) => a.kind === 'staff')).toHaveLength(2)
-    expect(engine.fire('receptionist')).toBe(false) // always keep one
-    expect(engine.fire('housekeeper')).toBe(true)
+    expect(g().money).toBe(START_MONEY - 150)
+    expect(engine.hire('receptionist')).toBe(true)
+    expect(g().money).toBe(START_MONEY - 150 - 200)
+    expect(g().staff).toEqual({ housekeeper: 1, receptionist: 1 })
     expect(g().agents.filter((a) => a.kind === 'staff')).toHaveLength(1)
+    expect(engine.fire('receptionist')).toBe(true) // the owner can run the desk alone
+    expect(engine.fire('receptionist')).toBe(false)
+    expect(engine.fire('housekeeper')).toBe(true)
+    expect(g().agents.filter((a) => a.kind === 'staff')).toHaveLength(0)
   })
 })
 
 describe('goals', () => {
-  it('pays a goal reward exactly once', () => {
-    engine.buildRoom(1, 2, 'standard')
-    g().money = 100000
-    g().width = 4
-    engine.buildRoom(1, 3, 'standard') // 4 rooms + widen goal
-    const after = g().money
+  it('starts with no goal already met', () => {
     engine.checkGoals()
-    expect(g().goalsDone.rooms4).toBe(true)
-    expect(g().money).toBe(after)
+    expect(g().goalsDone).toEqual({})
+    expect(g().money).toBe(START_MONEY)
+  })
+
+  it('pays a goal reward exactly once', () => {
+    for (const r of Object.values(g().rooms)) if (r.status === 'broken') r.status = 'vacant'
+    engine.checkGoals()
+    expect(g().goalsDone.fixAll).toBe(true)
+    expect(g().money).toBe(START_MONEY + 200)
+    engine.checkGoals()
+    expect(g().money).toBe(START_MONEY + 200)
   })
 })
 

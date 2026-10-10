@@ -14,6 +14,11 @@ const act = (fn) => (...args) => {
   syncUI()
 }
 const fmt = (n) => `$${Math.round(n).toLocaleString()}`
+// open desks: one per receptionist, plus yours while you work it
+const deskLabel = (snap) => {
+  const n = snap.staff.receptionist + (snap.owner.atDesk ? 1 : 0)
+  return n ? `${n} desk${n > 1 ? 's' : ''} open` : 'desk unmanned'
+}
 const clock = (minute) => `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(Math.floor((minute % 60) / 10) * 10).padStart(2, '0')}`
 const TIER_TYPES = ['standard', 'deluxe', 'suite']
 
@@ -85,7 +90,7 @@ function Nav() {
           <span className="site-code">HT-01</span>
           <div>
             <b>Coral Grand</b>
-            <small>{snap.floors} floors · {occ}% full · {snap.staff.receptionist} desk{snap.staff.receptionist > 1 ? 's' : ''}</small>
+            <small>{snap.floors} floors · {occ}% full · {deskLabel(snap)}</small>
           </div>
         </div>
         <div className="live">
@@ -152,7 +157,7 @@ function Kpis() {
         <span className="kpi-icon green"><Icon name="list" size={18} /></span>
         <div>
           <small>Reception queue</small>
-          <div className="kpi-main"><b className={snap.queue > 5 ? 'neg' : ''}>{snap.queue}</b><span className="kpi-chip">{snap.staff.receptionist} desk{snap.staff.receptionist > 1 ? 's' : ''}</span></div>
+          <div className="kpi-main"><b className={snap.queue > 5 ? 'neg' : ''}>{snap.queue}</b><span className="kpi-chip">{deskLabel(snap)}</span></div>
           <span className="kpi-sub">{snap.today.lost} walked out today</span>
         </div>
       </div>
@@ -402,6 +407,7 @@ const STATUS = {
   occupied: ['Occupied', 'blue'],
   dirty: ['Needs cleaning', 'amber'],
   cleaning: ['Cleaning', 'violet'],
+  broken: ['Broken', 'red'],
 }
 
 function Detail({ roomKey }) {
@@ -431,7 +437,7 @@ function Detail({ roomKey }) {
       </div>
       <div className="detail-status">
         <span className={`pill ${tone}`}>{label}</span>
-        <small className="muted">{guest ? `Guest #G-${guest.id}` : cleaner ? (cleaner.kind === 'owner' ? (room.status === 'cleaning' ? 'You’re cleaning it' : 'You’re on the way') : 'Housekeeper on it') : def.kind === 'room' ? 'No guest assigned' : `${room.users.length}/${def.capacity} visitors`}</small>
+        <small className="muted">{room.status === 'broken' ? (owner.task?.kind === 'fix' && owner.task.room === roomKey ? (owner.state === 'fixing' ? 'You’re fixing it' : 'You’re on the way') : 'Can’t be sold until fixed') : guest ? `Guest #G-${guest.id}` : cleaner ? (cleaner.kind === 'owner' ? (room.status === 'cleaning' ? 'You’re cleaning it' : 'You’re on the way') : 'Housekeeper on it') : def.kind === 'room' ? 'No guest assigned' : `${room.users.length}/${def.capacity} visitors`}</small>
       </div>
       <div className="kvs">
         {def.kind === 'room' ? (
@@ -451,6 +457,11 @@ function Detail({ roomKey }) {
         <div className="kv"><span>Build value</span><b>{fmt(def.cost)}</b></div>
       </div>
       <div className="detail-actions">
+        {room.status === 'broken' && !(owner.task?.kind === 'fix' && owner.task.room === roomKey) && (
+          <button className="btn accent" disabled={owner.energy < ENERGY_COST.fix} onClick={act(() => ownerTask('fix', roomKey))}>
+            Fix it yourself · {ENERGY_COST.fix} energy
+          </button>
+        )}
         {def.kind === 'room' && room.status === 'dirty' && room.cleanBy == null && (
           <button className="btn accent" disabled={owner.energy < ENERGY_COST.clean} onClick={act(() => ownerTask('clean', roomKey))}>
             Clean it yourself · {ENERGY_COST.clean} energy
@@ -494,12 +505,13 @@ function OwnerCard() {
   })
 
   const room = o.task?.room && game.rooms[o.task.room]
-  const short = !o.task ? 'Free' : o.task.kind === 'desk' ? 'At the desk' : o.state === 'cleaning' ? 'Cleaning' : 'On the way'
+  const short = !o.task ? 'Free' : o.task.kind === 'desk' ? 'At the desk' : o.state === 'cleaning' ? 'Cleaning' : o.state === 'fixing' ? 'Fixing' : 'On the way'
+  const rn = room ? roomName(room) : ''
   const doing = !o.task
-    ? 'Free. Select a dirty room to clean it'
+    ? 'Free. Select a dirty or broken room'
     : o.task.kind === 'desk'
       ? (o.atDesk ? 'Working the front desk' : 'Walking to the desk')
-      : o.state === 'cleaning' ? `Cleaning room ${room ? roomName(room) : ''}` : `Heading to room ${room ? roomName(room) : ''}`
+      : o.state === 'cleaning' ? `Cleaning room ${rn}` : o.state === 'fixing' ? `Fixing room ${rn}` : `Heading to room ${rn}`
   const pct = Math.round((o.energy / ENERGY_MAX) * 100)
   const bar = <div className={`energy-bar ${o.tired ? 'low' : ''}`}><i style={{ width: `${pct}%` }} /></div>
 
@@ -534,7 +546,7 @@ function OwnerCard() {
             Work the desk · {ENERGY_COST.checkIn}/guest
           </button>
         )}
-        {o.task?.kind === 'clean' && <button className="btn" onClick={choose('stop')}>Stop</button>}
+        {(o.task?.kind === 'clean' || o.task?.kind === 'fix') && <button className="btn" onClick={choose('stop')}>Stop</button>}
       </div>
     </div>
   )
@@ -764,16 +776,17 @@ function Help({ onClose }) {
   return (
     <div className="modal-wrap">
       <div className="modal help">
-        <small className="eyebrow">Welcome, manager</small>
-        <h2>Run the Coral Grand</h2>
+        <small className="eyebrow">Day 1</small>
+        <h2>You’ve inherited a tired little inn</h2>
+        <p className="muted">Six rooms, two of them broken, $1,500 and no staff. For now <b>you</b> are the receptionist, the cleaner and the handyman.</p>
         <ul>
-          <li><span><Icon name="car" size={16} /></span>Guests arrive by taxi or on foot, queue at <b>reception</b> and get the best matching free room.</li>
-          <li><span><Icon name="sparkle" size={16} /></span>After check-out a room is <b>dirty</b> — housekeepers clean it before it can be sold again.</li>
-          <li><span><Icon name="person" size={16} /></span><b>You</b> walk the hotel too (orange ring): work the desk or clean a room yourself. Chores cost <b>energy</b>, which refills overnight.</li>
-          <li><span><Icon name="building" size={16} /></span>Use the tool rail to build rooms, <b>add floors</b> and <b>widen</b> the hotel.</li>
-          <li><span><Icon name="glass" size={16} /></span>Amenities earn extra money and raise guest satisfaction.</li>
-          <li><span><Icon name="star" size={16} /></span>Happy guests raise your rating, which brings more — and richer — guests.</li>
-          <li><span><Icon name="wallet" size={16} /></span>Wages and upkeep are paid every midnight.</li>
+          <li><span><Icon name="person" size={16} /></span><p><b>You</b> (orange ring) work the desk, clean and fix rooms. Every chore costs <b>energy</b>, which refills overnight.</p></li>
+          <li><span><Icon name="car" size={16} /></span><p>Guests arrive by taxi or on foot, queue at <b>reception</b> and get the best matching free room.</p></li>
+          <li><span><Icon name="sparkle" size={16} /></span><p>After check-out a room is <b>dirty</b> and can’t be sold until someone cleans it. Hire a housekeeper or receptionist when you can afford one.</p></li>
+          <li><span><Icon name="building" size={16} /></span><p>Use the tool rail to build rooms, <b>add floors</b> and <b>widen</b> the hotel.</p></li>
+          <li><span><Icon name="glass" size={16} /></span><p>Amenities earn extra money and raise guest satisfaction.</p></li>
+          <li><span><Icon name="star" size={16} /></span><p>Happy guests raise your rating, which brings more — and richer — guests.</p></li>
+          <li><span><Icon name="wallet" size={16} /></span><p>Wages and upkeep are paid every midnight.</p></li>
         </ul>
         <p className="muted">Drag to orbit · right-drag to pan · scroll to zoom · Space pauses · 1/2/3 set speed</p>
         <button className="btn primary wide" onClick={onClose}>Open the doors</button>

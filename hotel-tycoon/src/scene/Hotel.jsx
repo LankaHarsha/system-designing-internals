@@ -466,13 +466,14 @@ function EmptyDecor({ showPlus, color }) {
 function RoomStatus({ roomKey, wallMat, def }) {
   const badge = useRef()
   const badgeMat = useRef()
+  const badgeCone = useRef()
   const bag = useRef()
   const sparkle = useRef()
   useFrame(() => {
     const room = game.rooms[roomKey]
     if (!room) return
     const t = performance.now() / 1000
-    const lit = def.kind === 'amenity' ? 0.25 + env.night * 0.55 : room.status === 'occupied' ? 0.15 + env.night * 0.6 : room.status === 'cleaning' ? 0.3 : 0.02
+    const lit = def.kind === 'amenity' ? 0.25 + env.night * 0.55 : room.status === 'occupied' ? 0.15 + env.night * 0.6 : room.status === 'cleaning' ? 0.3 : room.status === 'broken' ? 0 : 0.02
     wallMat.emissiveIntensity += (lit - wallMat.emissiveIntensity) * 0.08
     if (bag.current) bag.current.visible = room.status === 'dirty' || room.status === 'cleaning'
     if (sparkle.current) {
@@ -481,7 +482,10 @@ function RoomStatus({ roomKey, wallMat, def }) {
       sparkle.current.position.y = 1.6 + Math.sin(t * 4) * 0.1
     }
     if (badge.current) {
-      badge.current.visible = def.kind === 'room' && room.status === 'dirty'
+      // amber for dirty, red for broken
+      badge.current.visible = def.kind === 'room' && (room.status === 'dirty' || room.status === 'broken')
+      if (badgeMat.current) badgeMat.current.color.set(room.status === 'broken' ? '#e5484d' : '#ffb020')
+      if (badgeCone.current) badgeCone.current.color.set(room.status === 'broken' ? '#e5484d' : '#ffb020')
       badge.current.position.y = INNER_H - 1.75 + Math.sin(t * 2.6 + roomKey.length) * 0.06
       badge.current.scale.setScalar(0.55)
     }
@@ -494,7 +498,7 @@ function RoomStatus({ roomKey, wallMat, def }) {
         </mesh>
         <mesh position={[0, 0.42, 0]} rotation={[Math.PI, 0, 0]} raycast={() => null}>
           <coneGeometry args={[0.37, 0.85, 24]} />
-          <meshStandardMaterial color="#ffb020" roughness={0.35} />
+          <meshStandardMaterial ref={badgeCone} color="#ffb020" roughness={0.35} />
         </mesh>
         <mesh geometry={sphereGeo(0.17, 16)} material={mat('#ffffff')} position={[0, 0.97, 0.3]} raycast={() => null} />
       </group>

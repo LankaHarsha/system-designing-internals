@@ -1,7 +1,9 @@
 // Milestones that pay a one-off reward. `check` reads the game through its public getters.
 export const GOALS = [
-  { id: 'rooms4', text: 'Have 4 guest rooms', reward: 500, check: (g) => g.building.countGuestRooms() >= 4 },
-  { id: 'floor2', text: 'Build a 2nd floor', reward: 600, check: (g) => g.floors >= 2 },
+  { id: 'fixAll', text: 'Fix every broken room', reward: 200, check: (g) => !g.building.all().some((r) => r.status === 'broken') },
+  { id: 'firstHire', text: 'Hire your first member of staff', reward: 150, check: (g) => g.staff.housekeeper + g.staff.receptionist >= 1 },
+  { id: 'rooms8', text: 'Have 8 guest rooms', reward: 500, check: (g) => g.building.countGuestRooms() >= 8 },
+  { id: 'floor3', text: 'Build a 3rd floor', reward: 600, check: (g) => g.floors >= 3 },
   { id: 'guests25', text: 'Check in 25 guests', reward: 800, check: (g) => g.totals.guests >= 25 },
   { id: 'deluxe', text: 'Build a Deluxe Room', reward: 500, check: (g) => g.building.hasType('deluxe') },
   { id: 'restaurant', text: 'Open a Restaurant', reward: 1000, check: (g) => g.building.hasType('restaurant') },

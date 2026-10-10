@@ -18,9 +18,26 @@ export const ELEV_SPEED = 0.55
 export const QUEUE_MAX = 8
 export const DESK_CAPACITY = 3
 
-export const START_MONEY = 3000
+export const START_MONEY = 1500 // Day 1: an inherited inn and not much cash
+export const START_RATING = 2.5
+export const DAILY_FIXED_COSTS = 30 // utilities and supplies, paid at midnight
 
 export const ROOM_TYPES = {
+  // the tired rooms of the inn you inherit; not buildable, upgrade them to Cozy Rooms
+  inn: {
+    id: 'inn',
+    kind: 'room',
+    name: 'Inn Room',
+    tier: 0,
+    cost: 300,
+    price: 40,
+    upkeep: 0,
+    wall: '#e6dccd',
+    accent: '#b08a62',
+    floor: '#cdb79a',
+    desc: 'Tired but honest. Backpackers only.',
+    icon: '🛏️',
+  },
   standard: {
     id: 'standard',
     kind: 'room',
@@ -111,8 +128,8 @@ export const ROOM_TYPES = {
 }
 
 export const STAFF_TYPES = {
-  housekeeper: { id: 'housekeeper', name: 'Housekeeper', hire: 300, wage: 80, max: 12, icon: '🧹', color: '#5b8def' },
-  receptionist: { id: 'receptionist', name: 'Receptionist', hire: 400, wage: 100, max: DESK_CAPACITY, icon: '🛎️', color: '#e98a6b' },
+  housekeeper: { id: 'housekeeper', name: 'Housekeeper', hire: 150, wage: 30, max: 12, icon: '🧹', color: '#5b8def' },
+  receptionist: { id: 'receptionist', name: 'Receptionist', hire: 200, wage: 40, max: DESK_CAPACITY, icon: '🛎️', color: '#e98a6b' },
 }
 
 export const GUEST_COLORS = [

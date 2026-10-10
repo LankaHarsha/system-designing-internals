@@ -29,8 +29,8 @@ In the Claude Code cloud sandbox, add `PW_CHROMIUM_PATH=/opt/pw-browsers/chromiu
 | Area | Checks |
 | --- | --- |
 | RNG (`sim.test.js`) | Same seed → same sequence; values in [0, 1) |
-| Golden master (`golden.test.js`) | Two scripted games (3 idle days; 10 days of building, hiring, upgrading, firing) reproduce the recorded state exactly: money, rating, rooms, every agent's position and state, random state. Intended rule changes: `UPDATE_GOLDEN=1 npm test`, then review the fixture diff |
-| Saves (`sim.test.js`) | A real v1 save from the old engine loads and continues exactly as the old engine did; mid-game save → load stays identical to the original; floaters/toasts never saved |
+| Golden master (`golden.test.js`) | Three scripted games from the Day 1 start (3 idle days; 10 days of fixing, hiring, building, upgrading, firing; 2 days of the owner alone) reproduce the recorded state exactly: money, rating, rooms, every agent's position and state, random state. Intended rule changes: `UPDATE_GOLDEN=1 npm test`, then review the fixture diff |
+| Saves (`sim.test.js`) | A real v1 save from the old engine loads with every field carried over and keeps running (rules changed since, so not an exact replay); mid-game save → load stays identical to the original; floaters/toasts never saved |
 | Commands (`sim.test.js`) | `game.apply(intent)` equals calling the command; unknown intents throw; `onCheckpoint` fires on builds and at midnight |
 | Owner (`owner.test.js`) | Starts rested at home; cleans a dirty room (walks, spends 8, room vacant); housekeepers keep off a claimed room; refuses clean/claimed/too-tired; stop hands the room back; works the desk (extra desk, 3 per check-in); leaves when exhausted; slow when tired, refills at midnight; post moves when a receptionist is hired; save/load mid-task is identical |
 | Purity (`sim.test.js`) | Nothing in `src/sim` touches `window`, `document`, storage, `performance`, `Date` or `Math.random` |

@@ -1,10 +1,10 @@
 import { FLOOR_H, slotX } from '../../game/constants'
-import { CLEAN_TIME, ENERGY_COST, ENERGY_MAX, OWNER_ID, TIRED_BELOW } from '../rules'
+import { CLEAN_TIME, ENERGY_COST, ENERGY_MAX, FIX_TIME, OWNER_ID, TIRED_BELOW } from '../rules'
 import { Agent } from './Agent'
 
 // You: the visible avatar who walks the building and does chores by hand. Give it a task and
 // it walks there (travel time is part of the pressure), spends energy and does the work.
-// Tasks: { kind: 'clean', room } | { kind: 'desk' }. One at a time; a new one replaces the old.
+// Tasks: { kind: 'clean' | 'fix', room } | { kind: 'desk' }. One at a time; a new one replaces the old.
 export class Owner extends Agent {
   constructor(p) {
     super({ color: '#e2522f', hair: '#3b2a20', mood: 'work', state: 'idle', speedMul: 1.2, ...p, id: OWNER_ID, kind: 'owner' })
@@ -42,6 +42,19 @@ export class Owner extends Agent {
     this.task = { kind: 'clean', room: key }
     this.state = 'toClean'
     this.routeTo({ x: slotX(room.slot) - 0.6, y: room.floor * FLOOR_H, z: 0.2 })
+    return true
+  }
+
+  fix(game, key) {
+    if (this.task?.kind === 'fix' && this.task.room === key) return true
+    const room = game.building.get(key)
+    if (!room) return false
+    if (room.status !== 'broken') { game.toast('Nothing to fix in there', '🔧'); return false }
+    if (this.energy < ENERGY_COST.fix) { game.toast('Too tired to fix it. Rest until tomorrow', '😮‍💨'); return false }
+    this.cancel(game)
+    this.task = { kind: 'fix', room: key, started: false }
+    this.state = 'toFix'
+    this.routeTo({ x: slotX(room.slot) + 0.4, y: room.floor * FLOOR_H, z: -0.4 })
     return true
   }
 
@@ -100,6 +113,7 @@ export class Owner extends Agent {
     if (!this.task) return this.wander(game)
     if (this.task.kind === 'desk') return this.deskDuty(game)
     if (this.task.kind === 'clean') return this.cleaning(game, dt)
+    if (this.task.kind === 'fix') return this.fixing(game, dt)
   }
 
   wander(game) {
@@ -121,6 +135,26 @@ export class Owner extends Agent {
       this.atDesk = true
       this.state = 'atDesk'
       this.heading = 0 // face the guests
+    }
+  }
+
+  fixing(game, dt) {
+    const room = game.building.get(this.task.room)
+    if (!room || room.status !== 'broken') return this.abandonRoom()
+    if (this.moving) return
+    if (!this.task.started) {
+      this.spend(ENERGY_COST.fix)
+      this.task.started = true
+      room.fixT = 0
+      this.state = 'fixing'
+    }
+    room.fixT += dt * (this.tired ? 0.6 : 1)
+    if (room.fixT >= FIX_TIME) {
+      room.status = 'vacant'
+      room.fixT = 0
+      game.floater('Fixed!', room.center, '#3d9a5f')
+      this.task = null
+      this.state = 'idle'
     }
   }
 

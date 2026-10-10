@@ -43,7 +43,7 @@ const P = {
   door: <><path d="M13 4h3a2 2 0 0 1 2 2v14" /><path d="M2 20h3" /><path d="M13 20h9" /><path d="M10 12v.01" /><path d="M13 4.56v16.16a.5.5 0 0 1-.63.48L5 19.36V5.48a2 2 0 0 1 1.52-1.94l5.24-1.31a1 1 0 0 1 1.24.97Z" /></>,
 }
 
-export const TYPE_ICON = { standard: 'bed', deluxe: 'sofa', suite: 'crown', restaurant: 'utensils', bar: 'glass', spa: 'droplet' }
+export const TYPE_ICON = { inn: 'bed', standard: 'bed', deluxe: 'sofa', suite: 'crown', restaurant: 'utensils', bar: 'glass', spa: 'droplet' }
 
 export default function Icon({ name, size = 18, stroke = 2, fill = 'none', className = '' }) {
   return (

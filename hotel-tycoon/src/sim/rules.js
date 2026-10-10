@@ -4,6 +4,7 @@ import { DEPTH, ROOM_TYPES } from '../game/constants'
 
 export const CHECKIN_TIME = 10 // game minutes per guest at the desk
 export const CLEAN_TIME = 35
+export const FIX_TIME = 40 // game minutes to repair a broken room
 export const TAXI_ARRIVE = 10 // game minutes for a taxi to reach the curb
 export const MAX_GUESTS = 90
 
@@ -11,7 +12,7 @@ export const MAX_GUESTS = 90
 export const OWNER_ID = 'owner' // never collides with numeric agent ids
 export const ENERGY_MAX = 100
 export const TIRED_BELOW = 20 // walk at half speed, clean at 60% pace
-export const ENERGY_COST = { checkIn: 3, clean: 8 }
+export const ENERGY_COST = { checkIn: 3, clean: 8, fix: 10 }
 export const MAX_TAXIS = 4
 
 export const SIDEWALK_Z = DEPTH / 2 + 3.4
@@ -19,6 +20,9 @@ export const CURB_Z = SIDEWALK_Z + 1.25 // where taxis drop guests off
 export const TAXI_LANE_Z = SIDEWALK_Z + 2.0
 export const WALK_RANGE = 26 // guests on foot appear/disappear this far from the hotel
 export const DOOR_Z = DEPTH / 2 - 0.3 // just inside the entrance
+
+// Day 1 (spec Act 1): a run-down 6-room inn over two floors, two rooms broken until fixed.
+export const INN = { floors: 2, width: 3, room: 'inn', broken: ['1-2', '2-1'] }
 
 export const HAIR_COLORS = ['#3b2a20', '#6b4a2f', '#d9a441', '#1f1f28', '#a4553a', '#e8e1d6']
 
@@ -45,7 +49,7 @@ export function amenityPreference(type, hour) {
   return 1
 }
 
-export const UPGRADES = { standard: 'deluxe', deluxe: 'suite' }
+export const UPGRADES = { inn: 'standard', standard: 'deluxe', deluxe: 'suite' }
 export function upgradeCost(type) {
   const next = UPGRADES[type]
   return next ? ROOM_TYPES[next].cost - Math.round(ROOM_TYPES[type].cost * 0.5) : null

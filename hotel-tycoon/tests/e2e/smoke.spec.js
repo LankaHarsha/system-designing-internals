@@ -33,6 +33,7 @@ test('a full day runs and ends with the day report', async ({ page }) => {
   const errors = watchErrors(page)
   await openGame(page)
   const snap = await page.evaluate(() => {
+    window.hotel.ownerTask('desk') // Day 1 has no staff: you check guests in
     window.hotel.simulateMinutes(1440)
     return window.hotel.snapshot()
   })
@@ -47,12 +48,12 @@ test('a full day runs and ends with the day report', async ({ page }) => {
 
 test('progress survives a page reload', async ({ page }) => {
   await openGame(page)
-  const built = await page.evaluate(() => window.hotel.buildRoom(1, 2, 'standard'))
-  expect(built).toBe(true)
+  const upgraded = await page.evaluate(() => window.hotel.upgradeRoom('1-0'))
+  expect(upgraded).toBe(true)
   await page.reload()
   await openGame(page)
-  const rooms = await page.evaluate(() => window.hotel.snapshot().totalRooms)
-  expect(rooms).toBe(3)
+  const type = await page.evaluate(() => window.hotel.game.rooms['1-0'].type)
+  expect(type).toBe('standard')
 })
 
 test('no horizontal page scroll', async ({ page }) => {
@@ -75,8 +76,6 @@ test('the owner takes chores from the HUD', async ({ page }) => {
   // make a room dirty with no housekeeper free, select it, and clean it yourself
   await page.evaluate(() => {
     const g = window.hotel.game
-    g.staff.housekeeper = 0
-    g.syncStaff()
     Object.assign(g.rooms['1-1'], { status: 'dirty', guestId: null, cleanBy: null })
     window.hotel.ui.getState().setSelected('1-1')
   })
@@ -88,6 +87,20 @@ test('the owner takes chores from the HUD', async ({ page }) => {
     const r = window.hotel.game.rooms['1-1']
     return r.cleanBy === null && ['vacant', 'occupied'].includes(r.status) && window.hotel.game.owner.task?.kind !== 'clean'
   })).toBe(true)
+  expect(errors).toEqual([])
+})
+
+test('Day 1: fix a broken room yourself from the room panel', async ({ page }) => {
+  const errors = watchErrors(page)
+  await openGame(page)
+  await page.getByRole('button', { name: 'Open the doors' }).click()
+  expect(await page.evaluate(() => window.hotel.snapshot().broken)).toBe(2)
+  await page.evaluate(() => window.hotel.ui.getState().setSelected('1-2'))
+  await expect(page.getByText('Can’t be sold until fixed')).toBeVisible()
+  await page.getByRole('button', { name: /Fix it yourself/ }).click()
+  await expect.poll(() => page.evaluate(() => window.hotel.game.owner.task?.kind)).toBe('fix')
+  await page.evaluate(() => window.hotel.simulateMinutes(180))
+  await expect.poll(() => page.evaluate(() => window.hotel.game.rooms['1-2'].status)).not.toBe('broken')
   expect(errors).toEqual([])
 })
 

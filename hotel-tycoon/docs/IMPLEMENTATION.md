@@ -20,8 +20,9 @@ The current build is a polished sandbox with staff from minute one. It is closer
 | Pricing, end-of-day report, goals | Done | |
 | Save | Partial | `localStorage`, one slot; versioned format (v2) that loads v1 saves |
 | Deterministic simulation | Done | Pure object-oriented `src/sim` (`Game`, `Building`, `Guest`, …); golden-master tests pin its behaviour |
-| Owner avatar, energy, manual tasks | Partial | Avatar walks the building, works the desk and cleans rooms; energy 100, refills at midnight, slow when tired. Other chores (check-out, restock, fix, complaints) next |
-| First-hire moment, staff traits | Not started | Game starts with 1 housekeeper + 1 receptionist |
+| Owner avatar, energy, manual tasks | Partial | Avatar works the desk, cleans and fixes rooms; energy 100, refills at midnight, slow when tired. Check-out, luggage, restock, complaints and hold-to-clean still to come |
+| Day 1 setup | Done | 6-room inn (2 broken), $1,500, 2.5★, $40 Inn Rooms, no staff, spec wages and $30/day fixed costs |
+| First-hire moment, staff traits | Not started | Day 1 now starts with no staff; hiring works from the Staff panel, but there is no dawn candidate or "Delegated" stamp yet |
 | Breakdowns, complaints | Not started | |
 | Character asset stack | Done | Quaternius Modular: 10 outfits, rigged and animated in the game |
 | Accounts and cloud saves | Not started | |
@@ -37,7 +38,7 @@ Gate: playtesters ask to keep playing past Day 3.
 - [x] Pick one family, record the choice in `ASSETS.md`, swap it into the game (Quaternius)
 - [x] Extract the simulation into a pure module: `Game.create(seed)`, `game.simulateMinutes(m)`, `game.apply(intent)`; no `window`, `localStorage` or `performance` inside (`src/sim`, enforced by a test)
 - [x] Owner avatar: walks the building, click a task to send them there (work the desk, clean a room)
-- [ ] Energy bar (done) and the Day 1 numbers from the spec (start $1,500, 6 rooms, 2 broken)
+- [x] Energy bar and the Day 1 numbers from the spec (start $1,500, 6 rooms, 2 broken). Not yet: 7-minute day length, bank loan offer
 - [ ] Manual tasks: check-in, check-out, hold-to-clean, restock, fix breakdown, complaint dialogue
 - [ ] First hire: candidate at dawn on Day 2, "Delegated" stamp, step back in any time
 - [x] Save schema version + migration from the current `hotel-tycoon-save-v1` (format v2; a real v1 save is a test fixture)
@@ -63,6 +64,12 @@ Gate: playtesters ask to keep playing past Day 3.
 | 2026-10-09 | `engine.js` stays as a thin facade with the old function API | The UI, tests and trailer keep working; views can move to the classes gradually |
 | 2026-10-09 | The owner is its own `Owner` agent with the fixed id `'owner'`, outside the guest/staff population | Keeps every existing agent id and replay identical; old saves gain an owner on load |
 | 2026-10-09 | Owner chores for now: work the desk (an extra desk, 3 energy per check-in) and clean a room (8 energy); staff still start hired | The spec's "step back in on any chore"; the staff-free Day 1 comes with the Day 1 numbers step |
+| 2026-10-10 | Day 1 per the spec: inherited 6-room inn (two floors of three), rooms 103 and 202 broken, $1,500, 2.5★, no staff | Spec Act 1: you do everything yourself, so the first hire feels like relief |
+| 2026-10-10 | New `inn` room type ($40, upkeep 0, not buildable, upgrades to Cozy for $450) instead of repricing Cozy Rooms | Keeps the later economy intact; the inn's rooms are a starting point you grow out of |
+| 2026-10-10 | Spec wages (housekeeper $150 + $30/day, receptionist $200 + $40/day) and $30/day fixed costs apply to every game, old saves included | One rule set; old saves keep everything else |
+| 2026-10-10 | Zero receptionists is allowed | The owner can always work the desk |
+| 2026-10-10 | Opening goals replaced: "Fix every broken room", "Hire your first member of staff", "8 guest rooms", "3rd floor" | The old "4 rooms" and "2nd floor" goals would pay out at the start |
+| 2026-10-10 | Kept for now: 2.4-minute days (spec says 7), guest stays of 4–11 game hours (rooms turn over within a day) | Both change the whole pace; tune together in the playtest |
 
 ## Progress log
 
@@ -70,6 +77,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-10 | Day 1: new games start as the spec's inherited inn: 6 Inn Rooms over two floors with 103 and 202 broken, $1,500, 2.5★, no staff. New owner chore "Fix it yourself" (10 energy, 40 game minutes); broken rooms are dark with a red marker and never sold. Spec wages and $30/day fixed costs. New welcome text. Golden master re-recorded on purpose for the new start; tests updated; new browser test fixes a room from the panel |
 | 2026-10-10 | Phones: the "You" card no longer covers the hotel. It starts folded into a small chip (energy + what you're doing), opens on tap, folds itself away after you pick a chore, and remembers your choice. Desktop can fold it too |
 | 2026-10-09 | Owner avatar: you walk the hotel in an orange shirt with a ring at your feet. "You" card with energy bar and Work the desk / Leave the desk; "Clean it yourself" on dirty rooms. Energy 100, refills at midnight, half speed and slower cleaning below 20. The reception desk gained the owner's post. 10 owner unit tests, a third golden scenario, and a browser test that drives the buttons |
 | 2026-10-09 | Simulation rewritten as object-oriented classes in `src/sim` with identical behaviour (golden master over 13 scripted game days, and a real v1 save continues exactly as the old engine did). Save format v2. `game.apply(intent)` command entry point. Benchmark: same speed as before, ~33 ms per busy simulated day |

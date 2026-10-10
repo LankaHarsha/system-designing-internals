@@ -213,6 +213,7 @@ export function Spa({ def }) {
 }
 
 export const FURNITURE = {
+  inn: StandardRoom, // the inherited rooms: same furniture, tired colours (ROOM_TYPES.inn)
   standard: StandardRoom,
   deluxe: DeluxeRoom,
   suite: SuiteRoom,

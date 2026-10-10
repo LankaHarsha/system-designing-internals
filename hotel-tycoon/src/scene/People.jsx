@@ -92,7 +92,7 @@ export default function People() {
       const run = speed > WALK_STRIDE_SPEED * 2.4
       const stride = (run ? RUN_STRIDE_SPEED : WALK_STRIDE_SPEED) * (a.scale || 1) // taller people stride further
       play(p, run ? 'run' : 'walk', THREE.MathUtils.clamp(speed / stride, 0.6, 2.4))
-    } else if (a.state === 'cleaning') {
+    } else if (a.state === 'cleaning' || a.state === 'fixing') {
       play(p, 'work', 1)
     } else {
       play(p, 'idle', 1)

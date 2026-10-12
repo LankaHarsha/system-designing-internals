@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useGame, syncUI } from '../game/store'
 import {
   game, setSpeed, setPrice, addFloor, widen, hire, fire, demolish, upgradeRoom, upgradeCost, UPGRADES,
-  GOALS, demandMix, resetGame, roomName, ownerTask,
+  GOALS, demandMix, resetGame, roomName, ownerTask, answerCandidate,
 } from '../game/engine'
 import { ENERGY_COST, ENERGY_MAX } from '../sim'
 import { ROOM_TYPES, STAFF_TYPES, MAX_FLOORS, MAX_WIDTH } from '../game/constants'
@@ -486,6 +486,7 @@ const isPhone = () => typeof matchMedia === 'function' && matchMedia('(max-width
 
 function OwnerCard() {
   const o = useGame((s) => s.snap.owner)
+  const staff = useGame((s) => s.snap.staff)
   // phones start folded so the card never sits on top of the hotel; the choice is remembered
   const [open, setOpenState] = useState(() => {
     try {
@@ -534,6 +535,7 @@ function OwnerCard() {
         </div>
         <button className="icon-btn" title="Fold away" aria-label="Fold away" onClick={() => setOpen(false)}><Icon name="down" size={15} /></button>
       </div>
+      <ChoreStrip staff={staff} />
       <div className="energy" title="Tasks cost energy. It refills overnight; below 20 you walk at half speed.">
         {bar}
         <small><b>{Math.round(o.energy)}</b> energy{o.tired ? ' · tired, moving slowly' : ''}</small>
@@ -548,6 +550,78 @@ function OwnerCard() {
         )}
         {(o.task?.kind === 'clean' || o.task?.kind === 'fix') && <button className="btn" onClick={choose('stop')}>Stop</button>}
       </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- the first hire (spec Act 1)
+// A floating card, never a modal: the game keeps running while they wait at the door.
+function CandidateCard() {
+  const c = useGame((s) => s.snap.candidate)
+  const money = useGame((s) => s.snap.money)
+  if (!c) return null
+  const role = c.role === 'housekeeper' ? 'Housekeeper' : 'Receptionist'
+  if (c.state === 'toPost') {
+    return (
+      <div className="candidate-card walking">
+        <span className="cand-icon">🎉</span>
+        <div><b>{c.name} is on the way to work</b><small>Heading to the {c.role === 'housekeeper' ? 'staff corner' : 'front desk'}</small></div>
+      </div>
+    )
+  }
+  if (c.state === 'leaving') return null
+  const show = () => {
+    const a = game.agentById(c.id)
+    if (a) camApi.focus(a.pos.x, a.pos.y + 0.8, a.pos.z, 16)
+  }
+  const hire = () => {
+    if (answerCandidate(true)) camApi.follow(c.id)
+    syncUI()
+  }
+  return (
+    <div className="candidate-card">
+      <div className="cand-head">
+        <span className="cand-icon">🚪</span>
+        <div>
+          <small className="eyebrow">Someone’s at the door</small>
+          <b>{c.name}, looking for work as a {role.toLowerCase()}</b>
+        </div>
+      </div>
+      <p>“I {c.why}. Could you use a hand?”</p>
+      <div className="kvs">
+        <div className="kv"><span>Signing fee</span><b>{fmt(c.fee)}</b></div>
+        <div className="kv"><span>Wage</span><b>{fmt(c.wage)}/day</b></div>
+        <div className="kv"><span>Waits</span><b>{c.state === 'knocking' ? `${Math.ceil(c.minutesLeft / 60)} h more` : 'walking up'}</b></div>
+      </div>
+      <div className="cand-actions">
+        <button className="btn accent" disabled={money < c.fee} onClick={hire}>Hire {c.name} · {fmt(c.fee)}</button>
+        <button className="btn" onClick={act(() => answerCandidate(false))}>Not now</button>
+        <button className="icon-btn" title="Show me" aria-label="Show me" onClick={show}><Icon name="target" size={15} /></button>
+      </div>
+    </div>
+  )
+}
+
+// chores you do by hand, greyed with a stamp once staff take them over (you can still step in)
+const CHORES = [
+  { id: 'desk', label: 'Check-in', icon: 'key', role: 'receptionist' },
+  { id: 'clean', label: 'Cleaning', icon: 'sparkle', role: 'housekeeper' },
+  { id: 'fix', label: 'Repairs', icon: 'hammer', role: null },
+]
+
+function ChoreStrip({ staff }) {
+  return (
+    <div className="chores">
+      {CHORES.map((c) => {
+        const delegated = c.role && staff[c.role] > 0
+        return (
+          <span key={c.id} className={`chore ${delegated ? 'delegated' : ''}`} title={delegated ? `Your ${c.role}s handle this. You can still step in.` : 'You do this yourself'}>
+            <Icon name={c.icon} size={14} />
+            {c.label}
+            {delegated && <i className="stamp">Delegated</i>}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -764,10 +838,14 @@ function DaySummary() {
 }
 
 function tipFor(s) {
-  if (s.lost > 3) return 'Guests are walking out of the queue — hire another receptionist.'
+  if (s.lost > 3) return game.staff.receptionist
+    ? 'Guests are walking out of the queue — hire another receptionist.'
+    : 'Guests are walking out of the queue — work the desk yourself, or hire a receptionist.'
   if (s.missed > 6) return 'You turned many guests away. Build more rooms or raise prices.'
   if (s.profit < 0) return 'You lost money today. Check staff count and upkeep against income.'
-  if (game.staff.housekeeper * 6 < Object.keys(game.rooms).length) return 'Dirty rooms can’t be sold — consider another housekeeper.'
+  if (game.staff.housekeeper * 6 < Object.keys(game.rooms).length) return game.staff.housekeeper
+    ? 'Dirty rooms can’t be sold — consider another housekeeper.'
+    : 'Dirty rooms can’t be sold — clean them yourself, or hire a housekeeper.'
   if (s.rating < 3) return 'Your rating is slipping. Match room types to demand and keep the queue short.'
   return 'Nice work! Amenities keep guests happy and earn extra cash.'
 }
@@ -822,7 +900,10 @@ export default function HUD({ quality, setQuality }) {
       <Rail />
       <div className="right-col">
         <MapControls quality={quality} setQuality={setQuality} onHelp={() => setHelp(true)} />
-        {selected && <Detail roomKey={selected} />}
+        <div className="right-stack">
+          <CandidateCard />
+          {selected && <Detail roomKey={selected} />}
+        </div>
       </div>
       <Toasts />
       <ToolHint />

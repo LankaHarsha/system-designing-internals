@@ -9,6 +9,7 @@ import { Reception } from './Reception'
 import { Arrivals } from './Arrivals'
 import { Ledger } from './Ledger'
 import { Goals } from './Goals'
+import { Recruitment } from './Recruitment'
 import { Housekeeper, Owner, agentFromJSON } from './agents'
 import { INN, OWNER_ID, UPGRADES, upgradeCost } from './rules'
 
@@ -42,6 +43,8 @@ export class Game {
     this.goals = new Goals(state.goalsDone)
     // the player's avatar; kept out of the population so it never shifts agent ids
     this.owner = state.owner ? new Owner(state.owner) : Owner.create(this)
+    // saves from before the first-hire event count it as done if staff were already hired
+    this.recruitment = new Recruitment(state.recruitment ?? { done: state.staff.housekeeper + state.staff.receptionist > 0 })
 
     // short-lived feedback for the view; never saved
     this.floaters = []
@@ -86,6 +89,7 @@ export class Game {
       money: l.money, today: l.today, totals: l.totals, history: l.history, lastSummary: l.lastSummary,
       goalsDone: this.goals.done,
       owner: this.owner,
+      recruitment: this.recruitment,
     }
   }
 
@@ -150,6 +154,7 @@ export class Game {
     if (hour !== prevHour) this.goals.check(this)
 
     this.arrivals.step(this, dt, hour)
+    this.recruitment.step(this)
     this.reception.step(this)
     this.owner.move(dt)
     this.owner.step(this, dt)
@@ -204,6 +209,7 @@ export class Game {
       case 'setPrice': this.priceMult = intent.mult; return true
       case 'setSpeed': this.speed = intent.speed; return true
       case 'owner': return this.ownerTask(intent.task, intent.room)
+      case 'candidate': return this.recruitment.answer(this, intent.hire)
       default: throw new Error(`Unknown intent: ${intent.type}`)
     }
   }
@@ -276,6 +282,10 @@ export class Game {
     return this.committed()
   }
 
+  hireFee(role) {
+    return STAFF_TYPES[role].hire
+  }
+
   hire(role) {
     const def = STAFF_TYPES[role]
     if (this.staff[role] >= def.max) return false
@@ -306,7 +316,7 @@ export class Game {
     throw new Error(`Unknown owner task: ${task}`)
   }
 
-  // after a build: goals may now be met, and it's worth saving
+  // after a build or a hire: goals may now be met, and it's worth saving
   committed() {
     this.goals.check(this)
     this.onCheckpoint(this)
@@ -322,6 +332,7 @@ export class Game {
     const dirty = guestRooms.filter((r) => r.status === 'dirty' || r.status === 'cleaning').length
     const broken = guestRooms.filter((r) => r.status === 'broken').length
     const journey = { arriving: 0, queue: 0, checkin: 0, staying: 0, leaving: 0 }
+    const cand = this.recruitment.candidate(this)
     let guests = 0
     for (const a of this.population.list) {
       if (a.kind !== 'guest') continue
@@ -354,7 +365,12 @@ export class Game {
       goalsDone: { ...this.goalsDone },
       structureVersion: b.version,
       lastSummary: this.lastSummary,
-      owner: { energy: this.owner.energy, tired: this.owner.tired, state: this.owner.state, task: this.owner.task && { ...this.owner.task }, atDesk: this.owner.atDesk },
+      candidate: cand && {
+        id: cand.id, name: cand.name, role: cand.role, state: cand.state, fee: this.hireFee(cand.role),
+        wage: STAFF_TYPES[cand.role].wage, minutesLeft: Math.max(0, Math.round(this.recruitment.deadline - this.absTime)),
+        why: cand.role === 'housekeeper' ? 'heard you’ve been cleaning rooms all day' : 'saw the queue at your desk',
+      },
+      owner: { energy: this.owner.energy, chores: { ...this.owner.chores }, tired: this.owner.tired, state: this.owner.state, task: this.owner.task && { ...this.owner.task }, atDesk: this.owner.atDesk },
       floorCost: floorCost(b.floors + 1),
       widenCost: widenCost(b.width + 1, b.floors),
     }

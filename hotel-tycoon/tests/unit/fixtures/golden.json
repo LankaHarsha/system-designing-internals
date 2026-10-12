@@ -5,7 +5,7 @@
   "money": 1410,
   "rating": 1.215782,
   "rngState": 236366784,
-  "nextId": 220,
+  "nextId": 223,
   "floors": 2,
   "width": 3,
   "staff": {
@@ -77,7 +77,7 @@
   ],
   "goalsDone": [],
   "queue": [
-   217
+   220
   ],
   "desks": [],
   "rooms": [
@@ -132,7 +132,7 @@
   ],
   "agents": [
    {
-    "id": 213,
+    "id": 216,
     "kind": "guest",
     "state": "leaving",
     "mood": "angry",
@@ -144,7 +144,7 @@
     "path": 1
    },
    {
-    "id": 217,
+    "id": 220,
     "kind": "guest",
     "state": "queue",
     "mood": "happy",
@@ -156,7 +156,7 @@
     "path": 0
    },
    {
-    "id": 218,
+    "id": 221,
     "kind": "guest",
     "state": "arriving",
     "mood": "happy",
@@ -168,7 +168,7 @@
     "path": 2
    },
    {
-    "id": 219,
+    "id": 222,
     "kind": "guest",
     "state": "arriving",
     "mood": "happy",
@@ -604,7 +604,7 @@
   "money": 1640,
   "rating": 1.93687,
   "rngState": -2099150380,
-  "nextId": 166,
+  "nextId": 169,
   "floors": 2,
   "width": 3,
   "staff": {
@@ -661,7 +661,7 @@
   ],
   "goalsDone": [],
   "queue": [
-   160
+   162
   ],
   "desks": [],
   "rooms": [
@@ -729,6 +729,18 @@
    },
    {
     "id": 158,
+    "kind": "candidate",
+    "state": "leaving",
+    "mood": "happy",
+    "hidden": false,
+    "x": -6.22,
+    "y": 0,
+    "z": 5.4,
+    "heading": -1.570796,
+    "path": 1
+   },
+   {
+    "id": 160,
     "kind": "guest",
     "state": "leaving",
     "mood": "angry",
@@ -740,7 +752,7 @@
     "path": 1
    },
    {
-    "id": 160,
+    "id": 162,
     "kind": "guest",
     "state": "queue",
     "mood": "happy",
@@ -752,7 +764,7 @@
     "path": 0
    },
    {
-    "id": 162,
+    "id": 164,
     "kind": "guest",
     "state": "arriving",
     "mood": "happy",
@@ -764,7 +776,7 @@
     "path": 2
    },
    {
-    "id": 163,
+    "id": 166,
     "kind": "guest",
     "state": "arriving",
     "mood": "happy",
@@ -776,7 +788,7 @@
     "path": 2
    },
    {
-    "id": 165,
+    "id": 168,
     "kind": "guest",
     "state": "arriving",
     "mood": "happy",
@@ -785,6 +797,181 @@
     "y": 0,
     "z": 5.639771,
     "heading": -1.582041,
+    "path": 2
+   }
+  ]
+ },
+ "first-hire-4-days": {
+  "owner": {
+   "energy": 97,
+   "state": "atDesk",
+   "task": {
+    "kind": "desk"
+   },
+   "atDesk": true,
+   "x": 6.6,
+   "y": 0,
+   "z": -1.45
+  },
+  "day": 5,
+  "minute": 420,
+  "money": 1410,
+  "rating": 2.069596,
+  "rngState": 1759133687,
+  "nextId": 362,
+  "floors": 2,
+  "width": 3,
+  "staff": {
+   "housekeeper": 0,
+   "receptionist": 1
+  },
+  "totals": {
+   "guests": 4,
+   "lost": 13,
+   "earned": 160,
+   "bestDay": 160
+  },
+  "today": {
+   "revenue": 0,
+   "rooms": 0,
+   "amenities": 0,
+   "tips": 0,
+   "expenses": 0,
+   "guests": 0,
+   "lost": 0,
+   "missed": 4
+  },
+  "history": [
+   {
+    "day": 1,
+    "revenue": 160,
+    "rooms": 160,
+    "amenities": 0,
+    "tips": 0,
+    "expenses": 30,
+    "guests": 4,
+    "lost": 0,
+    "missed": 20,
+    "wages": 0,
+    "upkeep": 30,
+    "profit": 130,
+    "rating": 2.89399
+   },
+   {
+    "day": 2,
+    "revenue": 0,
+    "rooms": 0,
+    "amenities": 0,
+    "tips": 0,
+    "expenses": 30,
+    "guests": 0,
+    "lost": 6,
+    "missed": 33,
+    "wages": 0,
+    "upkeep": 30,
+    "profit": -30,
+    "rating": 2.445238
+   },
+   {
+    "day": 3,
+    "revenue": 0,
+    "rooms": 0,
+    "amenities": 0,
+    "tips": 0,
+    "expenses": 70,
+    "guests": 0,
+    "lost": 7,
+    "missed": 31,
+    "wages": 40,
+    "upkeep": 30,
+    "profit": -70,
+    "rating": 2.069596
+   },
+   {
+    "day": 4,
+    "revenue": 0,
+    "rooms": 0,
+    "amenities": 0,
+    "tips": 0,
+    "expenses": 70,
+    "guests": 0,
+    "lost": 0,
+    "missed": 35,
+    "wages": 40,
+    "upkeep": 30,
+    "profit": -70,
+    "rating": 2.069596
+   }
+  ],
+  "goalsDone": [
+   "firstHire"
+  ],
+  "queue": [],
+  "desks": [
+   null,
+   null
+  ],
+  "rooms": [
+   {
+    "key": "1-0",
+    "type": "inn",
+    "status": "dirty",
+    "guestId": null,
+    "cleanBy": null,
+    "users": []
+   },
+   {
+    "key": "1-1",
+    "type": "inn",
+    "status": "dirty",
+    "guestId": null,
+    "cleanBy": null,
+    "users": []
+   },
+   {
+    "key": "1-2",
+    "type": "inn",
+    "status": "broken",
+    "guestId": null,
+    "cleanBy": null,
+    "users": []
+   },
+   {
+    "key": "2-0",
+    "type": "inn",
+    "status": "dirty",
+    "guestId": null,
+    "cleanBy": null,
+    "users": []
+   },
+   {
+    "key": "2-1",
+    "type": "inn",
+    "status": "broken",
+    "guestId": null,
+    "cleanBy": null,
+    "users": []
+   },
+   {
+    "key": "2-2",
+    "type": "inn",
+    "status": "dirty",
+    "guestId": null,
+    "cleanBy": null,
+    "users": []
+   }
+  ],
+  "agents": [
+   {
+    "id": 361,
+    "kind": "guest",
+    "state": "arriving",
+    "mood": "happy",
+    "hidden": false,
+    "x": 26.417822,
+    "y": 0,
+    "z": 5.418931,
+    "heading": -1.571971,
     "path": 2
    }
   ]

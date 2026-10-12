@@ -24,6 +24,10 @@ export const DOOR_Z = DEPTH / 2 - 0.3 // just inside the entrance
 // Day 1 (spec Act 1): a run-down 6-room inn over two floors, two rooms broken until fixed.
 export const INN = { floors: 2, width: 3, room: 'inn', broken: ['1-2', '2-1'] }
 
+// The first hire (spec Act 1): a candidate knocks at dawn after Day 2 if you have no staff yet.
+export const FIRST_HIRE = { day: 3, hour: 6, waitMinutes: 180 }
+export const CANDIDATE_NAMES = ['Maya', 'Ravi', 'Lena', 'Tomás', 'Aiko', 'Sam', 'Noor', 'Jonah', 'Priya', 'Elena']
+
 export const HAIR_COLORS = ['#3b2a20', '#6b4a2f', '#d9a441', '#1f1f28', '#a4553a', '#e8e1d6']
 
 // Arrival intensity by hour of day

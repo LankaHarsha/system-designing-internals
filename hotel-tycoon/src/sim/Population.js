@@ -12,6 +12,15 @@ export class Population {
     this.byId.set(agent.id, agent)
   }
 
+  // swap one agent for another in the same list slot (a candidate becoming staff)
+  replace(old, next) {
+    const i = this.list.indexOf(old)
+    if (i < 0) return this.add(next)
+    this.list[i] = next
+    this.byId.delete(old.id)
+    this.byId.set(next.id, next)
+  }
+
   get(id) {
     return this.byId.get(id)
   }

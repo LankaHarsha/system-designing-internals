@@ -104,6 +104,32 @@ test('Day 1: fix a broken room yourself from the room panel', async ({ page }) =
   expect(errors).toEqual([])
 })
 
+test('the first hire: a candidate knocks on Day 3 and walks to their post', async ({ page }) => {
+  test.setTimeout(180_000) // two simulated days plus several HUD round trips on software WebGL
+  const errors = watchErrors(page)
+  await openGame(page)
+  await page.getByRole('button', { name: 'Open the doors' }).click()
+  // dawn on Day 3, with no staff hired
+  await page.evaluate(() => window.hotel.simulateMinutes(2 * 1440 - 3 * 60 + 30))
+  // two midnights passed: close the end-of-day report once the HUD shows it
+  const startDay = page.getByRole('button', { name: /^Start day/ })
+  await expect(startDay).toBeVisible({ timeout: 30_000 })
+  await startDay.click()
+  await expect(page.getByText('Someone’s at the door')).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: /^Hire / }).click()
+  await expect.poll(() => page.evaluate(() => window.hotel.game.recruitment.candidate(window.hotel.game)?.state)).toBe('toPost')
+  await page.evaluate(() => window.hotel.simulateMinutes(120))
+  await expect.poll(() => page.evaluate(() => {
+    const s = window.hotel.game.staff
+    return s.housekeeper + s.receptionist
+  })).toBe(1)
+  const chip = page.getByRole('button', { name: 'Show your owner card' })
+  if (await chip.isVisible()) await chip.click()
+  // the HUD syncs from the engine every few frames; software WebGL is slow
+  await expect(page.getByText('Delegated', { exact: true })).toBeVisible({ timeout: 30_000 })
+  expect(errors).toEqual([])
+})
+
 test('character lab loads every asset without errors', async ({ page }) => {
   const errors = watchErrors(page)
   const missing = []

@@ -53,6 +53,21 @@ export const SCENARIOS = [
       e.simulateMinutes(600)
     },
   },
+  {
+    // the first hire: work the inn alone until a candidate knocks on Day 3, then hire them
+    name: 'first-hire-4-days',
+    seed: 77,
+    owner: true,
+    script: (e) => {
+      const g = e.game
+      g.ownerTask('desk')
+      e.simulateMinutes(2 * 1440 - 180)
+      e.simulateMinutes(60) // dawn on Day 3: the knock
+      g.apply({ type: 'candidate', hire: true })
+      g.ownerTask('desk')
+      e.simulateMinutes(2 * 1440)
+    },
+  },
 ]
 
 const r6 = (v) => Math.round(v * 1e6) / 1e6

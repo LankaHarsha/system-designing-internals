@@ -51,7 +51,7 @@ function Floaters() {
 
 // ---------------------------------------------------------------- camera
 // Imperative camera API used by the on-screen map controls.
-export const camApi = { zoom: () => {}, rotate: () => {}, home: () => {}, focus: () => {}, set: () => {} }
+export const camApi = { zoom: () => {}, rotate: () => {}, home: () => {}, focus: () => {}, set: () => {}, follow: () => {} }
 
 const HOME_DIR = new THREE.Vector3(0.62, 0.66, 1).normalize()
 
@@ -62,6 +62,7 @@ function CameraRig() {
   const controls = useRef()
   const { camera, size } = useThree()
   const anim = useRef(null)
+  const follow = useRef(null) // agent id the camera tracks (the first hire walking to their post)
 
   const homePose = () => {
     const lw = width * SLOT_W
@@ -114,6 +115,14 @@ function CameraRig() {
     flyTo(target.clone().addScaledVector(dir, dist), target)
   }
 
+  // Track an agent until it is gone or the player grabs the camera.
+  camApi.follow = (id, dist = 16) => {
+    const a = game.agentById(id)
+    if (!a || window.__camLocked) return
+    camApi.focus(a.pos.x, a.pos.y + 0.8, a.pos.z, dist)
+    follow.current = id
+  }
+
   // Frame the hotel on load (with a little swoop) and whenever it grows.
   const first = useRef(true)
   useEffect(() => {
@@ -138,8 +147,19 @@ function CameraRig() {
   }, [selected])
 
   useFrame((_, dt) => {
-    const a = anim.current
     const c = controls.current
+    if (follow.current != null && c) {
+      const who = game.agentById(follow.current)
+      if (!who || who.dead) follow.current = null
+      else {
+        // slide camera and target together so the framing stays while they walk
+        const k = 1 - Math.pow(0.02, Math.min(dt, 0.05))
+        const goal = new THREE.Vector3(who.pos.x, who.pos.y + 0.8, who.pos.z)
+        const step = goal.sub(anim.current ? anim.current.target : c.target).multiplyScalar(k)
+        if (anim.current) { anim.current.target.add(step); anim.current.pos.add(step) } else { c.target.add(step); camera.position.add(step) }
+      }
+    }
+    const a = anim.current
     if (!a || !c) return
     const k = 1 - Math.pow(0.004, Math.min(dt, 0.05))
     camera.position.lerp(a.pos, k)
@@ -159,7 +179,7 @@ function CameraRig() {
       maxAzimuthAngle={1.45}
       minDistance={10}
       maxDistance={170}
-      onStart={() => (anim.current = null)}
+      onStart={() => { anim.current = null; follow.current = null }}
     />
   )
 }

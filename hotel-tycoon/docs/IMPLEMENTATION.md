@@ -22,7 +22,8 @@ The current build is a polished sandbox with staff from minute one. It is closer
 | Deterministic simulation | Done | Pure object-oriented `src/sim` (`Game`, `Building`, `Guest`, …); golden-master tests pin its behaviour |
 | Owner avatar, energy, manual tasks | Partial | Avatar works the desk, cleans and fixes rooms; energy 100, refills at midnight, slow when tired. Check-out, luggage, restock, complaints and hold-to-clean still to come |
 | Day 1 setup | Done | 6-room inn (2 broken), $1,500, 2.5★, $40 Inn Rooms, no staff, spec wages and $30/day fixed costs |
-| First-hire moment, staff traits | Not started | Day 1 now starts with no staff; hiring works from the Staff panel, but there is no dawn candidate or "Delegated" stamp yet |
+| First-hire moment | Done | A candidate knocks at dawn on Day 3 offering the chore you spent most energy on; hire and the camera follows them to their post; "Delegated" stamps |
+| Staff traits, roles unlocked over time | Not started | |
 | Breakdowns, complaints | Not started | |
 | Character asset stack | Done | Quaternius Modular: 10 outfits, rigged and animated in the game |
 | Accounts and cloud saves | Not started | |
@@ -40,7 +41,7 @@ Gate: playtesters ask to keep playing past Day 3.
 - [x] Owner avatar: walks the building, click a task to send them there (work the desk, clean a room)
 - [x] Energy bar and the Day 1 numbers from the spec (start $1,500, 6 rooms, 2 broken). Not yet: 7-minute day length, bank loan offer
 - [ ] Manual tasks: check-in, check-out, hold-to-clean, restock, fix breakdown, complaint dialogue
-- [ ] First hire: candidate at dawn on Day 2, "Delegated" stamp, step back in any time
+- [x] First hire: candidate at dawn after Day 2, "Delegated" stamp, step back in any time
 - [x] Save schema version + migration from the current `hotel-tycoon-save-v1` (format v2; a real v1 save is a test fixture)
 - [ ] Guest accounts with cloud saves (provider decision pending)
 - [ ] Playtest with 5–10 people, tune numbers, record results below
@@ -70,6 +71,9 @@ Gate: playtesters ask to keep playing past Day 3.
 | 2026-10-10 | Zero receptionists is allowed | The owner can always work the desk |
 | 2026-10-10 | Opening goals replaced: "Fix every broken room", "Hire your first member of staff", "8 guest rooms", "3rd floor" | The old "4 rooms" and "2nd floor" goals would pay out at the start |
 | 2026-10-10 | Kept for now: 2.4-minute days (spec says 7), guest stays of 4–11 game hours (rooms turn over within a day) | Both change the whole pace; tune together in the playtest |
+| 2026-10-12 | First hire: if you have no staff at dawn on Day 3, a named candidate knocks, offering the job whose chores cost you the most energy (cleaning → housekeeper, desk → receptionist). They wait 3 game hours | Spec Act 1: the first hire should feel like a gift that answers *your* pain |
+| 2026-10-12 | The offer is a floating card, the game keeps running; the end-of-day report stays the only modal | Spec UI: no modal pop-ups during play |
+| 2026-10-12 | Fee is paid on "Hire", the job starts when they reach their post; a housekeeper candidate keeps their id and becomes the housekeeper | The hand-over is seamless on screen: same person, same outfit, same spot |
 
 ## Progress log
 
@@ -77,6 +81,7 @@ Newest first.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-12 | First hire: a candidate knocks at dawn on Day 3 (floating card with Hire / Not now / Show me, 3-hour wait); on hire the camera follows them to their post and the chore gets a green "Delegated" stamp on your card (Check-in / Cleaning / Repairs strip); you can still step in. Owner keeps a chore tally. End-of-day tips no longer say "another" when you have none. 10 recruitment unit tests, a new recorded game, and a browser test of the whole flow |
 | 2026-10-10 | Day 1: new games start as the spec's inherited inn: 6 Inn Rooms over two floors with 103 and 202 broken, $1,500, 2.5★, no staff. New owner chore "Fix it yourself" (10 energy, 40 game minutes); broken rooms are dark with a red marker and never sold. Spec wages and $30/day fixed costs. New welcome text. Golden master re-recorded on purpose for the new start; tests updated; new browser test fixes a room from the panel |
 | 2026-10-10 | Phones: the "You" card no longer covers the hotel. It starts folded into a small chip (energy + what you're doing), opens on tap, folds itself away after you pick a chore, and remembers your choice. Desktop can fold it too |
 | 2026-10-09 | Owner avatar: you walk the hotel in an orange shirt with a ring at your feet. "You" card with energy bar and Work the desk / Leave the desk; "Clean it yourself" on dirty rooms. Energy 100, refills at midnight, half speed and slower cleaning below 20. The reception desk gained the owner's post. 10 owner unit tests, a third golden scenario, and a browser test that drives the buttons |

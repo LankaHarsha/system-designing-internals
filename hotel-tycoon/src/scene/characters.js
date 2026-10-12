@@ -1,6 +1,8 @@
 // The people in the hotel: Quaternius Ultimate Modular Men + Women (CC0), slimmed by
 // scripts/import-characters.sh. Game, character lab and asset tests all read this list.
 
+import { game } from '../game/engine'
+
 export const CHARACTER_DIR = './assets/characters/quaternius-modular/'
 
 export const OUTFITS = {
@@ -30,6 +32,12 @@ export const RUN_STRIDE_SPEED = 2.7
 // Same agent, same outfit, every frame and after a reload (ids are saved).
 export function outfitFor(agent) {
   if (agent.kind === 'owner') return OUTFITS.owner[0]
+  // a job candidate already dresses for the role (a housekeeper keeps their id when hired)
+  if (agent.kind === 'candidate') {
+    return agent.role === 'housekeeper'
+      ? OUTFITS.housekeeper[agent.id % OUTFITS.housekeeper.length]
+      : OUTFITS.receptionist[game.staff.receptionist % OUTFITS.receptionist.length]
+  }
   const list = agent.kind === 'staff' ? OUTFITS.housekeeper : agent.tier === 2 ? OUTFITS.vip : OUTFITS.guest
   return list[agent.id % list.length]
 }

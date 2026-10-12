@@ -29,10 +29,11 @@ In the Claude Code cloud sandbox, add `PW_CHROMIUM_PATH=/opt/pw-browsers/chromiu
 | Area | Checks |
 | --- | --- |
 | RNG (`sim.test.js`) | Same seed → same sequence; values in [0, 1) |
-| Golden master (`golden.test.js`) | Three scripted games from the Day 1 start (3 idle days; 10 days of fixing, hiring, building, upgrading, firing; 2 days of the owner alone) reproduce the recorded state exactly: money, rating, rooms, every agent's position and state, random state. Intended rule changes: `UPDATE_GOLDEN=1 npm test`, then review the fixture diff |
+| Golden master (`golden.test.js`) | Four scripted games from the Day 1 start (3 idle days; 10 days of fixing, hiring, building, upgrading, firing; 2 days of the owner alone; 4 days ending in the first hire) reproduce the recorded state exactly: money, rating, rooms, every agent's position and state, random state. Intended rule changes: `UPDATE_GOLDEN=1 npm test`, then review the fixture diff |
 | Saves (`sim.test.js`) | A real v1 save from the old engine loads with every field carried over and keeps running (rules changed since, so not an exact replay); mid-game save → load stays identical to the original; floaters/toasts never saved |
 | Commands (`sim.test.js`) | `game.apply(intent)` equals calling the command; unknown intents throw; `onCheckpoint` fires on builds and at midnight |
 | Owner (`owner.test.js`) | Starts rested at home; cleans a dirty room (walks, spends 8, room vacant); housekeepers keep off a claimed room; refuses clean/claimed/too-tired; stop hands the room back; works the desk (extra desk, 3 per check-in); leaves when exhausted; slow when tired, refills at midnight; post moves when a receptionist is hired; save/load mid-task is identical |
+| First hire (`recruitment.test.js`) | No knock before dawn on Day 3; knock when unstaffed; offers the costlier chore's role; hire charges the fee, walks to the post and the same person becomes the housekeeper (goal paid); receptionist opens a desk; "not now" is final; gives up after 3 hours; stays if you can't pay; no knock if you hired earlier; save/load mid-knock is identical |
 | Purity (`sim.test.js`) | Nothing in `src/sim` touches `window`, `document`, storage, `performance`, `Date` or `Math.random` |
 | New game | Starting money, rooms, staff |
 | Determinism | 3 simulated days replay identically from one seed; differ for another |

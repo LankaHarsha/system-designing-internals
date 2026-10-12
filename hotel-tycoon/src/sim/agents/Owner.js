@@ -11,6 +11,7 @@ export class Owner extends Agent {
     this.energy = p.energy ?? ENERGY_MAX
     this.task = p.task ?? null
     this.atDesk = p.atDesk ?? false // serving at the owner's desk right now
+    this.chores = { checkIn: 0, clean: 0, fix: 0, ...p.chores } // done by hand, all game
   }
 
   static create(game) {
@@ -100,6 +101,7 @@ export class Owner extends Agent {
 
   // A guest was checked in at the owner's desk.
   onCheckIn(game) {
+    this.chores.checkIn++
     this.spend(ENERGY_COST.checkIn)
     if (this.energy < ENERGY_COST.checkIn) {
       game.toast('You’re exhausted. Leaving the desk to the staff', '😮‍💨')
@@ -152,6 +154,7 @@ export class Owner extends Agent {
     if (room.fixT >= FIX_TIME) {
       room.status = 'vacant'
       room.fixT = 0
+      this.chores.fix++
       game.floater('Fixed!', room.center, '#3d9a5f')
       this.task = null
       this.state = 'idle'
@@ -174,6 +177,7 @@ export class Owner extends Agent {
       room.status = 'vacant'
       room.cleanBy = null
       room.cleanT = 0
+      this.chores.clean++
       game.floater('Sparkling!', room.center, '#3d9a5f')
       this.task = null
       this.state = 'idle'
